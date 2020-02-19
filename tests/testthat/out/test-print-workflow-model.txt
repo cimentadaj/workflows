@@ -1,5 +1,6 @@
 > add_model(workflow(), model)
 == Workflow ====================================================================
+Data: None
 Preprocessor: None
 Model: linear_reg()
 

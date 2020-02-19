@@ -1,5 +1,6 @@
 > fit(workflow, mtcars)
 == Workflow [trained] ==========================================================
+Data: None
 Preprocessor: Formula
 Model: linear_reg()
 

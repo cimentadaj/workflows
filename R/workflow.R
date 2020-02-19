@@ -18,13 +18,18 @@
 #' wrk <- add_recipe(wrk, rec)
 #'
 #' @export
-workflow <- function() {
-  new_workflow()
+workflow <- function(data = NULL) {
+  if (!is.null(data) && !is.data.frame(data)) {
+    abort("A workflow can only begin with a data frame; `data` must a data frame")
+  }
+
+  new_workflow(data = data)
 }
 
 # ------------------------------------------------------------------------------
 
-new_workflow <- function(pre = new_stage_pre(),
+new_workflow <- function(data = NULL,
+                         pre = new_stage_pre(),
                          fit = new_stage_fit(),
                          post = new_stage_post(),
                          trained = FALSE) {
@@ -45,6 +50,7 @@ new_workflow <- function(pre = new_stage_pre(),
   }
 
   data <- list(
+    data = data,
     pre = pre,
     fit = fit,
     post = post,
@@ -81,6 +87,25 @@ print_header <- function(x) {
   header <- cli::rule(header, line = 2)
 
   cat_line(header)
+
+  data_msg <- cli::style_italic("Data:")
+
+  if (is.null(x$data)) {
+    data_msg <- glue::glue("{data_msg} None")
+  } else {
+    data_missing <- sum(is.na(x$data)) / nrow(x$data)
+    # I include a `is.nan` in case the data frame
+    # is empty and 0 / 0 equals NaN
+    data_content <- glue::glue(
+      "{nrow(x$data)} rows x {ncol(x$data)} columns; ",
+      "{if (is.nan(data_missing)) 0 else data_missing}% missing values"
+    )
+
+    data_msg <- glue::glue("{data_msg} {data_content}")
+
+  }
+
+  cat_line(data_msg)
 
   preprocessor_msg <- cli::style_italic("Preprocessor:")
 

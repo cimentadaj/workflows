@@ -70,6 +70,7 @@ remove_model <- function(x) {
   }
 
   new_workflow(
+    data = x$data,
     pre = x$pre,
     fit = new_stage_fit(),
     post = new_stage_post(actions = x$post$actions),

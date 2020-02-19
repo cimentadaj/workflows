@@ -1,5 +1,6 @@
 > add_recipe(workflow(), rec)
 == Workflow ====================================================================
+Data: None
 Preprocessor: Recipe
 Model: None
 

@@ -56,6 +56,7 @@ remove_formula <- function(x) {
   }
 
   new_workflow(
+    data = x$data,
     pre = new_stage_pre(),
     fit = new_stage_fit(actions = x$fit$actions),
     post = new_stage_post(actions = x$post$actions),
