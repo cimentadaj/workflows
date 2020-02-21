@@ -142,16 +142,26 @@ print_header <- function(x) {
 print_preprocessor <- function(x) {
   has_preprocessor_formula <- has_preprocessor_formula(x)
   has_preprocessor_recipe <- has_preprocessor_recipe(x)
+  has_preprocessor_split <- has_preprocessor_split(x)
 
-  if (!has_preprocessor_formula && !has_preprocessor_recipe) {
+  no_preprocessing <-
+    !has_preprocessor_formula &&
+    !has_preprocessor_recipe &&
+    !has_preprocessor_split
+  
+  if (no_preprocessing) {
     return(invisible(x))
   }
 
-  # Space between Workflow section and Preprocessor section
+  # Space between Workflow section and Data section
   cat_line("")
 
   header <- cli::rule("Preprocessor")
   cat_line(header)
+
+  if (has_preprocessor_split) {
+    print_preprocessor_split(x)
+  }
 
   if (has_preprocessor_formula) {
     print_preprocessor_formula(x)
@@ -162,6 +172,27 @@ print_preprocessor <- function(x) {
   }
 
   invisible(x)
+}
+
+print_preprocessor_split <- function(x) {
+  split_msg <- cli::style_italic("Split:")
+
+  if (!has_preprocessor_split(x)) {
+    split_msg <- glue::glue("{split_msg} None")
+  } else {
+    split_fn_name <- names(x$pre$actions$split)[1]
+    arg <- unlist(x$pre$actions$split$args)
+
+    if (rlang::is_empty(arg)) {
+      arg_msg <- "default args"
+    } else {
+      arg_msg <- paste0(names(arg), " = ", arg, collapse = ", ")
+    }
+
+    split_msg <- glue::glue("{split_msg} {split_fn_name} w/ {arg_msg}")
+  }
+
+  cat_line(split_msg)
 }
 
 print_preprocessor_formula <- function(x) {

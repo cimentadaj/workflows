@@ -48,23 +48,23 @@ lm_model <- set_engine(lm_model, "lm")
 
 regularized_model <- set_engine(lm_model, "glmnet")
 
-workflow <- workflow()
-workflow <- add_model(workflow, lm_model)
-workflow
+wf <- workflow()
+wf <- add_model(wf, lm_model)
+wf
 
-workflow <- add_formula(workflow, mpg ~ .)
-workflow
+wf <- add_formula(wf, mpg ~ .)
+wf
 
-remove_model(workflow)
+remove_model(wf)
 
-fitted <- fit(workflow, data = mtcars)
+fitted <- fit(wf, data = mtcars)
 fitted
 
 remove_model(fitted)
 
-remove_model(workflow)
+remove_model(wf)
 
-update_model(workflow, regularized_model)
+update_model(wf, regularized_model)
 update_model(fitted, regularized_model)
 
 }

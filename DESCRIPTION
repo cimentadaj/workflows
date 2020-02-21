@@ -30,7 +30,8 @@ Suggests:
     knitr,
     recipes,
     rmarkdown,
-    testthat (>= 2.3.0)
+    testthat (>= 2.3.0),
+    rsample
 VignetteBuilder: 
     knitr
 Encoding: UTF-8
