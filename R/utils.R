@@ -58,3 +58,8 @@ has_spec <- function(x) {
 has_fit <- function(x) {
   !is.null(x$fit$fit)
 }
+
+has_raw_data <- function(x) {
+  !is.null(x$data)
+}
+

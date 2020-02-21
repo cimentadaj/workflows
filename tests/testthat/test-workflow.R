@@ -1,5 +1,12 @@
 check_workflow <- function(workflow) {
   expect_is(workflow, "workflow")
+
+  if (has_raw_data(workflow)) {
+    expect_is(workflow$data, "data.frame")
+  } else {
+    expect_is(workflow$data, "NULL")
+  }
+  
   expect_is(workflow$pre, "stage_pre")
   expect_is(workflow$fit, "stage_fit")
   expect_is(workflow$post, "stage_post")
@@ -16,7 +23,7 @@ test_that("can create a basic workflow", {
   check_workflow(workflow)
 
   # With data frame
-  workflow <- workflow(data.frame())
+  workflow <- workflow(mtcars)
   check_workflow(workflow)
 })
 

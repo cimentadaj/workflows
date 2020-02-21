@@ -4,6 +4,8 @@
 #' These functions extract various elements from a workflow object. If they do
 #' not exist yet, an error is thrown.
 #'
+#' - `pull_workflow_rawdata()` returns the complete raw/untrained data.
+#' 
 #' - `pull_workflow_preprocessor()` returns either the formula or recipe used
 #'   for preprocessing.
 #'
@@ -29,6 +31,10 @@
 #' library(parsnip)
 #' library(recipes)
 #'
+#' ## TODO: Once you hack the recipe to not using the data,
+#' ## remember to change this example to avoid specifying mtcars
+#' ## in the recipe.
+#' 
 #' model <- linear_reg()
 #' model <- set_engine(model, "lm")
 #'
@@ -36,6 +42,7 @@
 #' recipe <- step_log(recipe, disp)
 #'
 #' base_workflow <- workflow()
+#' base_workflow <- add_data(base_workflow, mtcars)
 #' base_workflow <- add_model(base_workflow, model)
 #'
 #' recipe_workflow <- add_recipe(base_workflow, recipe)
@@ -44,6 +51,9 @@
 #' fit_recipe_workflow <- fit(recipe_workflow, mtcars)
 #' fit_formula_workflow <- fit(formula_workflow, mtcars)
 #'
+#' pull_workflow_rawdata(fit_recipe_workflow)
+#' pull_workflow_rawdata(fit_formula_workflow)
+#' 
 #' # The preprocessor is either a recipe or a formula
 #' pull_workflow_preprocessor(recipe_workflow)
 #' pull_workflow_preprocessor(formula_workflow)
@@ -67,6 +77,19 @@
 #'   pull_workflow_prepped_recipe(fit_recipe_workflow)
 #' )
 NULL
+
+#' @rdname workflow-extractors
+#' @export
+pull_workflow_rawdata <- function(x) {
+  validate_is_workflow(x)
+
+  if (has_raw_data(x)) {
+    return(x$data)
+  }
+
+  abort("The workflow does not have data.")
+}
+
 
 #' @rdname workflow-extractors
 #' @export

@@ -2,6 +2,7 @@
 % Please edit documentation in R/pull.R
 \name{workflow-extractors}
 \alias{workflow-extractors}
+\alias{pull_workflow_rawdata}
 \alias{pull_workflow_preprocessor}
 \alias{pull_workflow_spec}
 \alias{pull_workflow_fit}
@@ -9,6 +10,8 @@
 \alias{pull_workflow_prepped_recipe}
 \title{Extract elements of a workflow}
 \usage{
+pull_workflow_rawdata(x)
+
 pull_workflow_preprocessor(x)
 
 pull_workflow_spec(x)
@@ -30,6 +33,7 @@ section.
 These functions extract various elements from a workflow object. If they do
 not exist yet, an error is thrown.
 \itemize{
+\item \code{pull_workflow_rawdata()} returns the complete raw/untrained data.
 \item \code{pull_workflow_preprocessor()} returns either the formula or recipe used
 for preprocessing.
 \item \code{pull_workflow_spec()} returns the parsnip model specification.
@@ -45,6 +49,10 @@ extracted from the mold object returned from \code{pull_workflow_mold()}.
 library(parsnip)
 library(recipes)
 
+## TODO: Once you hack the recipe to not using the data,
+## remember to change this example to avoid specifying mtcars
+## in the recipe.
+
 model <- linear_reg()
 model <- set_engine(model, "lm")
 
@@ -52,6 +60,7 @@ recipe <- recipe(mpg ~ cyl + disp, mtcars)
 recipe <- step_log(recipe, disp)
 
 base_workflow <- workflow()
+base_workflow <- add_data(base_workflow, mtcars)
 base_workflow <- add_model(base_workflow, model)
 
 recipe_workflow <- add_recipe(base_workflow, recipe)
@@ -59,6 +68,9 @@ formula_workflow <- add_formula(base_workflow, mpg ~ cyl + log(disp))
 
 fit_recipe_workflow <- fit(recipe_workflow, mtcars)
 fit_formula_workflow <- fit(formula_workflow, mtcars)
+
+pull_workflow_rawdata(fit_recipe_workflow)
+pull_workflow_rawdata(fit_formula_workflow)
 
 # The preprocessor is either a recipe or a formula
 pull_workflow_preprocessor(recipe_workflow)

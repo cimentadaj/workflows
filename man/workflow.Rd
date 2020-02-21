@@ -4,14 +4,19 @@
 \alias{workflow}
 \title{Create a workflow}
 \usage{
-workflow()
+workflow(data = NULL)
+}
+\arguments{
+\item{data}{A data frame or tibble used to begin the workflow. This is
+optional as the data can be specified with \code{\link[=add_data]{add_data()}}.}
 }
 \value{
 A new \code{workflow} object.
 }
 \description{
 A \code{workflow} is a container object that aggregates information required to
-fit and predict from a model. This information might be a recipe used in
+fit and predict from a model. This information might be the main dataset,
+specified through \code{\link[=add_data]{add_data()}}, a recipe used in
 preprocessing, specified through \code{\link[=add_recipe]{add_recipe()}}, or the model specification
 to fit, specified through \code{\link[=add_model]{add_model()}}.
 }

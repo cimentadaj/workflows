@@ -1,10 +1,14 @@
 #' Create a workflow
 #'
 #' A `workflow` is a container object that aggregates information required to
-#' fit and predict from a model. This information might be a recipe used in
+#' fit and predict from a model. This information might be the main dataset,
+#' specified through [add_data()], a recipe used in
 #' preprocessing, specified through [add_recipe()], or the model specification
 #' to fit, specified through [add_model()].
 #'
+#' @param data A data frame or tibble used to begin the workflow. This is
+#' optional as the data can be specified with [add_data()]. 
+#' 
 #' @return
 #' A new `workflow` object.
 #'
@@ -20,7 +24,7 @@
 #' @export
 workflow <- function(data = NULL) {
   if (!is.null(data) && !is.data.frame(data)) {
-    abort("A workflow can only begin with a data frame; `data` must a data frame")
+    abort("A workflow can only begin with a data frame; `data` must a data frame") #nolintr
   }
 
   new_workflow(data = data)
@@ -90,19 +94,19 @@ print_header <- function(x) {
 
   data_msg <- cli::style_italic("Data:")
 
-  if (is.null(x$data)) {
+  if (!has_raw_data(x)) {
     data_msg <- glue::glue("{data_msg} None")
   } else {
-    data_missing <- sum(is.na(x$data)) / nrow(x$data)
+    dt <- pull_workflow_rawdata(x)
+    data_missing <- sum(is.na(dt)) / nrow(dt)
     # I include a `is.nan` in case the data frame
     # is empty and 0 / 0 equals NaN
     data_content <- glue::glue(
-      "{nrow(x$data)} rows x {ncol(x$data)} columns; ",
+      "{nrow(dt)} rows x {ncol(dt)} columns; ",
       "{if (is.nan(data_missing)) 0 else data_missing}% missing values"
     )
 
     data_msg <- glue::glue("{data_msg} {data_content}")
-
   }
 
   cat_line(data_msg)
