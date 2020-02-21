@@ -110,7 +110,7 @@ fit.workflow <- function(object, data, ..., control = control_workflow()) {
 .fit_pre <- function(workflow, data) {
   n <- length(workflow[["pre"]]$actions)
 
-  for(i in seq_len(n)) {
+  for (i in seq_len(n)) {
     action <- workflow[["pre"]]$actions[[i]]
 
     # Update both the `workflow` and the `data` as we iterate through pre steps
