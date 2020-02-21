@@ -57,7 +57,7 @@ check_conflicts.default <- function(action, x) {
 
 check_singleton <- function(actions, name) {
   if (name %in% names(actions)) {
-    glubort("A `{name}` action has already been added to this workflow.")
+    glubort("A `{name}` action has already been added to this workflow")
   }
   invisible(actions)
 }

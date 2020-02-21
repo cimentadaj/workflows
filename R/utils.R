@@ -85,7 +85,7 @@ purge_action <- function(x, name) {
   x <- x[selected_names]
   # In the case where the list of actions is empty
   # it will still be named. Make sure its completely empty
-  # This is useful for comparing with an empty list of actions.
+  # This is useful for comparing with an empty list of actions in the tests
   if (rlang::is_empty(x)) x <- unname(x)
   x
 }
