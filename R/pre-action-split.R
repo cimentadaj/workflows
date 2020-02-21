@@ -1,4 +1,4 @@
-#' Add a split to a workflow
+#' Add a split specification to a workflow
 #'
 #' @description
 #' - `add_split()` specifies the type of splitting used in the analysis. It

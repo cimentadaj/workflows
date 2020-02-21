@@ -117,6 +117,11 @@ test_that("Updating a split doesn't remove anything else", {
   expect_true(has_preprocessor_split(workflow))
 
   # The CV fold
+  workflow <- add_resample(workflow(), rsample::bootstraps)
+  workflow <- add_split(workflow, rsample::initial_split)
+  workflow <- update_resample(workflow, rsample::vfold_cv)
+  expect_true(has_preprocessor_resample(workflow))
+  expect_true(has_preprocessor_split(workflow))
 })
 
 test_that("Removing a split doesn't remove anything else", {
@@ -128,6 +133,11 @@ test_that("Removing a split doesn't remove anything else", {
   expect_true(has_preprocessor_recipe(workflow))
 
   # The CV fold
+  workflow <- add_resample(workflow(), rsample::bootstraps)
+  workflow <- add_split(workflow, rsample::initial_split)
+  workflow <- remove_split(workflow)
+  expect_true(has_preprocessor_resample(workflow))
+
 })
 
 test_that("Name of split function is always saved as name in the list", {

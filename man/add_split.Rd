@@ -4,7 +4,7 @@
 \alias{add_split}
 \alias{remove_split}
 \alias{update_split}
-\title{Add a split to a workflow}
+\title{Add a split specification to a workflow}
 \usage{
 add_split(x, .f, ...)
 
