@@ -143,13 +143,17 @@ print_preprocessor <- function(x) {
   has_preprocessor_formula <- has_preprocessor_formula(x)
   has_preprocessor_recipe <- has_preprocessor_recipe(x)
   has_preprocessor_split <- has_preprocessor_split(x)
+  has_preprocessor_resample <- has_preprocessor_resample(x)
 
-  no_preprocessing <-
-    !has_preprocessor_formula &&
-    !has_preprocessor_recipe &&
-    !has_preprocessor_split
-  
-  if (no_preprocessing) {
+  preprocessing <- c(
+    has_preprocessor_formula,
+    has_preprocessor_recipe,
+    has_preprocessor_split,
+    has_preprocessor_resample
+  )
+
+  # If all have **no** preprocessing, don't print anything
+  if (all(!preprocessing)) {
     return(invisible(x))
   }
 
@@ -161,6 +165,10 @@ print_preprocessor <- function(x) {
 
   if (has_preprocessor_split) {
     print_preprocessor_split(x)
+  }
+
+  if (has_preprocessor_resample) {
+    print_preprocessor_resample(x)
   }
 
   if (has_preprocessor_formula) {
@@ -193,6 +201,27 @@ print_preprocessor_split <- function(x) {
   }
 
   cat_line(split_msg)
+}
+
+print_preprocessor_resample <- function(x) {
+  resample_msg <- cli::style_italic("Resample:")
+
+  if (!has_preprocessor_resample(x)) {
+    resample_msg <- glue::glue("{resample_msg} None")
+  } else {
+    resample_fn_name <- names(x$pre$actions$resample)[1]
+    arg <- unlist(x$pre$actions$resample$args)
+
+    if (rlang::is_empty(arg)) {
+      arg_msg <- "default args"
+    } else {
+      arg_msg <- paste0(names(arg), " = ", arg, collapse = ", ")
+    }
+
+    resample_msg <- glue::glue("{resample_msg} {resample_fn_name} w/ {arg_msg}")
+  }
+
+  cat_line(resample_msg)
 }
 
 print_preprocessor_formula <- function(x) {

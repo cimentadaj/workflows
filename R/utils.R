@@ -42,6 +42,10 @@ has_preprocessor_split <- function(x) {
   "split" %in% names(x$pre$actions)
 }
 
+has_preprocessor_resample <- function(x) {
+  "resample" %in% names(x$pre$actions)
+}
+
 has_preprocessor_recipe <- function(x) {
   "recipe" %in% names(x$pre$actions)
 }
@@ -92,4 +96,8 @@ purge_action <- function(x, name) {
 
 purge_action_split <- function(x) {
   purge_action(x$pre$actions, "split")
+}
+
+purge_action_resample <- function(x) {
+  purge_action(x$pre$actions, "resample")
 }
