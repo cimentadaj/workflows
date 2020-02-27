@@ -84,7 +84,7 @@ pull_workflow_rawdata <- function(x) {
   validate_is_workflow(x)
 
   if (has_raw_data(x)) {
-    return(x$data$raw_data)
+    return(x$data)
   }
 
   abort("The workflow does not have data.")

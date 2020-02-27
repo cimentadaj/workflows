@@ -45,8 +45,7 @@ add_data <- function(x, data, ...) {
     rlang::abort("A data frame has already been added to this workflow")
   }
 
-  x$data$raw_data <- data
-  x$data$latest_data <- data
+  x$data <- data
   x
 }
 

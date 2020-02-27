@@ -2,8 +2,7 @@ test_that("can add a data to a workflow", {
   workflow <- workflow()
   workflow <- add_data(workflow, mtcars)
 
-  expect_is(workflow$data$raw_data, "data.frame")
-  expect_is(workflow$data$latest_data, "data.frame")
+  expect_is(workflow$data, "data.frame")
 })
 
 test_that("data is validated", {
@@ -15,9 +14,7 @@ test_that("remove workflow data", {
   workflow_with_data <- add_data(workflow_no_data, mtcars)
   workflow_removed_data <- remove_data(workflow_with_data)
 
-  expect_equal(workflow_no_data$data$raw_data, workflow_no_data$data$raw_data)
-  expect_equal(workflow_no_data$data$latest_data,
-               workflow_no_data$data$latest_data)
+  expect_equal(workflow_no_data$data, workflow_no_data$data)
 })
 
 test_that("update a dataframe", {
@@ -25,7 +22,7 @@ test_that("update a dataframe", {
   workflow <- add_data(workflow, mtcars)
   workflow <- update_data(workflow, iris)
 
-  expect_equal(workflow$data$raw_data, iris)
+  expect_equal(workflow$data, iris)
 })
 
 test_that("cannot add two data frames", {
