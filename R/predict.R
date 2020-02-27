@@ -25,6 +25,8 @@
 #' @name predict-workflow
 #' @export
 #' @examples
+#' # TODO
+#' \dontrun{
 #' library(parsnip)
 #' library(recipes)
 #'
@@ -47,6 +49,7 @@
 #' # This will automatically `bake()` the recipe on `testing`,
 #' # applying the log step to `disp`, and then fit the regression.
 #' predict(fit_workflow, testing)
+#' }
 predict.workflow <- function(object, new_data, type = NULL, opts = list(), ...) {
   workflow <- object
 

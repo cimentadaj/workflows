@@ -27,7 +27,8 @@ workflow <- function(data = NULL) {
     abort("A workflow can only begin with a data frame; `data` must a data frame") #nolintr
   }
 
-  new_workflow(data = data)
+  new_workflow(data = data,
+               pre = new_stage_pre(mold = data))
 }
 
 # ------------------------------------------------------------------------------

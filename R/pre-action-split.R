@@ -89,7 +89,7 @@ remove_split <- function(x) {
 
   new_workflow(
     data = x$data,
-    pre = new_stage_pre(actions = purge_action_split(x)),
+    pre = new_stage_pre(actions = purge_action_split(x), mold = x$data),
     fit = new_stage_fit(actions = x$fit$actions),
     post = new_stage_post(actions = x$post$actions),
     trained = FALSE
@@ -105,16 +105,28 @@ update_split <- function(x, .f, ...) {
 }
 
 # ------------------------------------------------------------------------------
+fit.action_split <- function(object, workflow) {
 
-## fit.action_recipe <- function(object, workflow, data) {
-##   recipe <- object$recipe
-##   blueprint <- object$blueprint
+  ## object[[2]] are the arguments as quosures
+  args <- lapply(object[[2]], eval_tidy)
 
-##   workflow$pre$mold <- hardhat::mold(recipe, data, blueprint = blueprint)
+  split_res <- rlang::exec(
+    # function body
+    object[[1]],
+    # function args
+    workflow$pre$mold,
+    !!!args
+  )
 
-##   # All pre steps return the `workflow` and `data`
-##   list(workflow = workflow, data = data)
-## }
+  if (!inherits(split_res, "rsplit")) {
+    abort("The split function should return an object of class `rsplit`.")
+  }
+
+  workflow$pre$mold <- rsample::training(split_res)
+  
+  # All pre steps return the `wflow`
+  workflow
+}
 
 # Exclude blueprint; it doesn't apply to data
 new_action_split <- function(.f, .dots, name_f) {

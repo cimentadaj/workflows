@@ -32,7 +32,8 @@ used for those purposes.}
 \itemize{
 \item \code{add_model()} adds a parsnip model to the workflow.
 \item \code{remove_model()} removes the model specification as well as any fitted
-model object. Any extra formulas are also removed.
+model object. Any extra formulas are also removed. Doesn't remove any steps
+from the \code{pre} stage.
 \item \code{update_model()} first removes the model then adds the new specification to
 the workflow.
 }
@@ -48,7 +49,7 @@ lm_model <- set_engine(lm_model, "lm")
 
 regularized_model <- set_engine(lm_model, "glmnet")
 
-wf <- workflow()
+wf <- workflow(mtcars)
 wf <- add_model(wf, lm_model)
 wf
 
@@ -57,7 +58,7 @@ wf
 
 remove_model(wf)
 
-fitted <- fit(wf, data = mtcars)
+fitted <- fit(wf)
 fitted
 
 remove_model(fitted)

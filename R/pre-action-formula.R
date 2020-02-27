@@ -57,7 +57,7 @@ remove_formula <- function(x) {
 
   new_workflow(
     data = x$data,
-    pre = new_stage_pre(),
+    pre = new_stage_pre(purge_action_formula(x), mold = x$data),
     fit = new_stage_fit(actions = x$fit$actions),
     post = new_stage_post(actions = x$post$actions),
     trained = FALSE
@@ -74,15 +74,17 @@ update_formula <- function(x, formula, ..., blueprint = NULL) {
 
 # ------------------------------------------------------------------------------
 
-fit.action_formula <- function(object, workflow, data) {
+fit.action_formula <- function(object, workflow) {
   formula <- object$formula
   blueprint <- object$blueprint
-
+  
   # TODO - Strip out the formula environment at some time?
-  workflow$pre$mold <- hardhat::mold(formula, data, blueprint = blueprint)
-
-  # All pre steps return the `workflow` and `data`
-  list(workflow = workflow, data = data)
+  workflow$pre$mold <- hardhat::mold(formula,
+                                     workflow$pre$mold,
+                                     blueprint = blueprint)
+  
+  # All pre steps return the `workflow`
+  workflow
 }
 
 # ------------------------------------------------------------------------------

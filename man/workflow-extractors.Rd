@@ -52,7 +52,7 @@ library(recipes)
 ## TODO: Once you hack the recipe to not using the data,
 ## remember to change this example to avoid specifying mtcars
 ## in the recipe.
-
+\dontrun{
 model <- linear_reg()
 model <- set_engine(model, "lm")
 
@@ -94,4 +94,5 @@ identical(
   pull_workflow_mold(fit_recipe_workflow)$blueprint$recipe,
   pull_workflow_prepped_recipe(fit_recipe_workflow)
 )
+}
 }

@@ -15,8 +15,10 @@ add_action_impl <- function(x, action, name) {
 }
 
 add_action_impl.action_pre <- function(x, action, name) {
+  sacred_order <- c("split", "formula", "recipe", "resample")
   check_singleton(x$pre$actions, name)
   x$pre <- add_action_to_stage(x$pre, action, name)
+  x$pre$actions <- clean_list(x$pre$actions[sacred_order])
   x
 }
 
@@ -113,4 +115,9 @@ is_list_of_actions <- function(x) {
   x <- compact(x)
 
   all(map_lgl(x, is_action))
+}
+
+clean_list <- function(x) {
+  is_null <- vapply(x, is.null, logical(1))
+  x[!is_null]
 }

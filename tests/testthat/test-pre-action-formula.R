@@ -15,18 +15,22 @@ test_that("cannot add a formula if a recipe already exists", {
   workflow <- workflow()
   workflow <- add_recipe(workflow, rec)
 
-  expect_error(add_formula(workflow, mpg ~ cyl), "cannot be added when a recipe already exists")
+  expect_error(
+    add_formula(workflow, mpg ~ cyl),
+    "cannot be added when a recipe already exists"
+  )
+
 })
 
 test_that("formula preprocessing is executed upon `fit()`", {
   mod <- parsnip::linear_reg()
   mod <- parsnip::set_engine(mod, "lm")
 
-  workflow <- workflow()
+  workflow <- workflow(mtcars)
   workflow <- add_formula(workflow, mpg ~ log(cyl))
   workflow <- add_model(workflow, mod)
 
-  result <- fit(workflow, mtcars)
+  result <- fit(workflow)
 
   expect_equal(
     result$pre$mold$outcomes$mpg,
@@ -37,6 +41,7 @@ test_that("formula preprocessing is executed upon `fit()`", {
     result$pre$mold$predictors$`log(cyl)`,
     log(mtcars$cyl)
   )
+
 })
 
 test_that("cannot add two formulas", {
@@ -58,15 +63,17 @@ test_that("remove a formula after model fit", {
   lm_model <- parsnip::linear_reg()
   lm_model <- parsnip::set_engine(lm_model, "lm")
 
-  workflow_no_formula <- workflow()
+  workflow_no_formula <- workflow(mtcars)
   workflow_no_formula <- add_model(workflow_no_formula, lm_model)
 
   workflow_with_formula  <- add_formula(workflow_no_formula, mpg ~ cyl)
-  workflow_with_formula <- fit(workflow_with_formula, data = mtcars)
+  workflow_with_formula <- fit(workflow_with_formula)
 
   workflow_removed_formula <- remove_formula(workflow_with_formula)
 
+  expect_equal(workflow_no_formula$data, workflow_removed_formula$pre$mold)
   expect_equal(workflow_no_formula$pre, workflow_removed_formula$pre)
+  expect_null(workflow_removed_formula$fit$fit)
 })
 
 test_that("update a formula", {
@@ -81,11 +88,11 @@ test_that("update a formula after model fit", {
   lm_model <- parsnip::linear_reg()
   lm_model <- parsnip::set_engine(lm_model, "lm")
 
-  workflow <- workflow()
+  workflow <- workflow(mtcars)
   workflow <- add_model(workflow, lm_model)
   workflow <- add_formula(workflow, mpg ~ cyl)
 
-  workflow <- fit(workflow, data = mtcars)
+  workflow <- fit(workflow)
 
   # Should clear fitted model
   workflow <- update_formula(workflow, mpg ~ disp)
@@ -93,7 +100,7 @@ test_that("update a formula after model fit", {
   expect_equal(workflow$pre$actions$formula$formula, mpg ~ disp)
 
   expect_equal(workflow$fit$actions$model$spec, lm_model)
-  expect_null(workflow$pre$mold)
+  expect_equal(workflow$data, workflow$pre$mold)
 })
 
 test_that("can pass a blueprint through to hardhat::mold()", {
@@ -102,11 +109,11 @@ test_that("can pass a blueprint through to hardhat::mold()", {
 
   blueprint <- hardhat::default_formula_blueprint(intercept = TRUE)
 
-  workflow <- workflow()
+  workflow <- workflow(mtcars)
   workflow <- add_model(workflow, lm_model)
   workflow <- add_formula(workflow, mpg ~ cyl, blueprint = blueprint)
 
-  workflow <- fit(workflow, data = mtcars)
+  workflow <- fit(workflow)
 
   expect_true("(Intercept)" %in% colnames(workflow$pre$mold$predictors))
   expect_equal(workflow$pre$actions$formula$blueprint, blueprint)
@@ -122,4 +129,29 @@ test_that("can only use a 'formula_blueprint' blueprint", {
     add_formula(workflow, mpg ~ cyl, blueprint = blueprint),
     "must be a hardhat 'formula_blueprint'"
   )
+})
+
+test_that("Formula works with add_split", {
+  mod <- parsnip::linear_reg()
+  mod <- parsnip::set_engine(mod, "lm")
+
+  workflow <- workflow(mtcars)
+  workflow <- add_split(workflow, rsample::initial_split)
+  workflow <- add_formula(workflow, mpg ~ log(cyl))
+  workflow <- add_model(workflow, mod)
+
+  result <- fit(workflow)
+
+  # This makes sure that the final model is fit
+  # on the splitted sample
+  expect_equal(
+    result$pre$mold$outcomes$mpg,
+    pull_workflow_fit(result)$fit$model[[1]]
+  )
+
+  expect_equal(
+    result$pre$mold$predictors$`log(cyl)`,
+    pull_workflow_fit(result)$fit$model[[2]]
+  )
+  
 })

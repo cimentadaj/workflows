@@ -14,9 +14,6 @@
 #'
 #' @param object A workflow
 #'
-#' @param data A data frame of predictors and outcomes to use when fitting the
-#'   workflow
-#'
 #' @param ... Not used
 #'
 #' @param control A [control_workflow()] object
@@ -34,30 +31,32 @@
 #' model <- linear_reg()
 #' model <- set_engine(model, "lm")
 #'
-#' base_workflow <- workflow()
+#' base_workflow <- workflow(mtcars)
 #' base_workflow <- add_model(base_workflow, model)
 #'
 #' formula_workflow <- add_formula(base_workflow, mpg ~ cyl + log(disp))
 #'
-#' fit(formula_workflow, mtcars)
-#'
+#' fit(formula_workflow)
+#' # TODO
+#' \dontrun{
 #' recipe <- recipe(mpg ~ cyl + disp, mtcars)
 #' recipe <- step_log(recipe, disp)
 #'
 #' recipe_workflow <- add_recipe(base_workflow, recipe)
 #'
 #' fit(recipe_workflow, mtcars)
-fit.workflow <- function(object, data, ..., control = control_workflow()) {
+#' }
+fit.workflow <- function(object, ..., control = control_workflow()) {
   workflow <- object
 
-  if (is_missing(data)) {
-    abort("`data` must be provided to fit a workflow.")
+  if (!has_raw_data(workflow)) {
+    abort("`data` must be specified to fit a workflow; Do you need `add_data`?")
   }
 
   ellipsis::check_dots_empty()
-  validate_has_minimal_components(object)
+  validate_has_minimal_components(workflow)
 
-  workflow <- .fit_pre(workflow, data)
+  workflow <- .fit_pre(workflow)
   workflow <- .fit_model(workflow, control)
 
   # Eh? Predictions during the fit?
@@ -100,27 +99,25 @@ fit.workflow <- function(object, data, ..., control = control_workflow()) {
 #' model <- linear_reg()
 #' model <- set_engine(model, "lm")
 #'
-#' base_workflow <- workflow()
+#' base_workflow <- workflow(mtcars)
 #' base_workflow <- add_model(base_workflow, model)
 #'
 #' formula_workflow <- add_formula(base_workflow, mpg ~ cyl + log(disp))
 #'
-#' partially_fit_workflow <- .fit_pre(formula_workflow, mtcars)
+#' partially_fit_workflow <- .fit_pre(formula_workflow)
 #' fit_workflow <- .fit_model(partially_fit_workflow, control_workflow())
-.fit_pre <- function(workflow, data) {
-  n <- length(workflow[["pre"]]$actions)
+.fit_pre <- function(wflow) {
+  n <- length(wflow[["pre"]]$actions)
 
   for (i in seq_len(n)) {
-    action <- workflow[["pre"]]$actions[[i]]
+    action <- wflow[["pre"]]$actions[[i]]
 
-    # Update both the `workflow` and the `data` as we iterate through pre steps
-    result <- fit(action, workflow = workflow, data = data)
-    workflow <- result$workflow
-    data <- result$data
+    # Update the `wflow` as we iterate through pre steps
+    wflow <- fit(action, workflow = wflow)
   }
 
-  # But only return the workflow, it contains the final set of data in `mold`
-  workflow
+  # But only return the wflow, it contains the final set of data in `mold`
+  wflow
 }
 
 #' @rdname workflows-internals

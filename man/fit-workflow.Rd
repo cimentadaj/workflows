@@ -5,13 +5,10 @@
 \alias{fit.workflow}
 \title{Fit a workflow object}
 \usage{
-\method{fit}{workflow}(object, data, ..., control = control_workflow())
+\method{fit}{workflow}(object, ..., control = control_workflow())
 }
 \arguments{
 \item{object}{A workflow}
-
-\item{data}{A data frame of predictors and outcomes to use when fitting the
-workflow}
 
 \item{...}{Not used}
 
@@ -40,17 +37,19 @@ library(recipes)
 model <- linear_reg()
 model <- set_engine(model, "lm")
 
-base_workflow <- workflow()
+base_workflow <- workflow(mtcars)
 base_workflow <- add_model(base_workflow, model)
 
 formula_workflow <- add_formula(base_workflow, mpg ~ cyl + log(disp))
 
-fit(formula_workflow, mtcars)
-
+fit(formula_workflow)
+# TODO
+\dontrun{
 recipe <- recipe(mpg ~ cyl + disp, mtcars)
 recipe <- step_log(recipe, disp)
 
 recipe_workflow <- add_recipe(base_workflow, recipe)
 
 fit(recipe_workflow, mtcars)
+}
 }

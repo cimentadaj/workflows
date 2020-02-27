@@ -18,25 +18,20 @@ test_that("remove a split specification", {
   expect_equal(workflow_no_split$pre, workflow_removed_split$pre)
 })
 
-# TODO
-# After you define a fit method for split, adapt this
-# example to remove the fit object after split
-## test_that("remove a recipe after model fit", {
-##   lm_model <- parsnip::linear_reg()
-##   lm_model <- parsnip::set_engine(lm_model, "lm")
+test_that("remove a split after model fit", {
+  lm_model <- parsnip::linear_reg()
+  lm_model <- parsnip::set_engine(lm_model, "lm")
 
-##   rec <- recipes::recipe(mpg ~ cyl, mtcars)
+  workflow_no_split <- add_formula(workflow(mtcars), mpg ~ cyl)
+  workflow_no_split <- add_model(workflow_no_split, lm_model)
 
-##   workflow_no_recipe <- workflow()
-##   workflow_no_recipe <- add_model(workflow_no_recipe, lm_model)
+  workflow_with_split  <- add_split(workflow_no_split, rsample::initial_split)
+  workflow_with_split <- fit(workflow_with_split)
 
-##   workflow_with_recipe  <- add_recipe(workflow_no_recipe, rec)
-##   workflow_with_recipe <- fit(workflow_with_recipe, data = mtcars)
+  workflow_removed_split <- remove_split(workflow_with_split)
 
-##   workflow_removed_recipe <- remove_recipe(workflow_with_recipe)
-
-##   expect_equal(workflow_no_recipe$pre, workflow_removed_recipe$pre)
-## })
+  expect_equal(workflow_no_split$pre, workflow_removed_split$pre)
+})
 
 test_that("update a split specification", {
   workflow <- workflow()
@@ -47,30 +42,25 @@ test_that("update a split specification", {
                rsample::initial_time_split)
 })
 
-# TODO
-# After you define a fit method for split, adapt this
-# example to remove the fit object after split
-## test_that("update a recipe after model fit", {
-##   rec <- recipes::recipe(mpg ~ cyl, mtcars)
-##   rec2 <- recipes::recipe(mpg ~ disp, mtcars)
+test_that("update a split after model fit", {
+  lm_model <- parsnip::linear_reg()
+  lm_model <- parsnip::set_engine(lm_model, "lm")
 
-##   lm_model <- parsnip::linear_reg()
-##   lm_model <- parsnip::set_engine(lm_model, "lm")
+  workflow <- workflow(mtcars)
+  workflow <- add_model(workflow, lm_model)
+  workflow <- add_formula(workflow, mpg ~ cyl)  
+  workflow <- add_split(workflow, rsample::initial_split)
+  workflow <- fit(workflow)
 
-##   workflow <- workflow()
-##   workflow <- add_model(workflow, lm_model)
-##   workflow <- add_recipe(workflow, rec)
+  # Should clear fitted model
+  workflow <- update_split(workflow, rsample::initial_time_split)
 
-##   workflow <- fit(workflow, data = mtcars)
+  expect_equal(workflow$pre$actions$split$`rsample::initial_time_split`,
+               rsample::initial_time_split)
 
-##   # Should clear fitted model
-##   workflow <- update_recipe(workflow, rec2)
-
-##   expect_equal(workflow$pre$actions$recipe$recipe, rec2)
-
-##   expect_equal(workflow$fit$actions$model$spec, lm_model)
-##   expect_null(workflow$pre$mold)
-## })
+  expect_equal(workflow$fit$actions$model$spec, lm_model)
+  expect_equal(workflow$data, workflow$pre$mold)
+})
 
 test_that("cannot add two split specifications", {
   workflow <- workflow()
@@ -150,6 +140,24 @@ test_that("Name of split function is always saved as name in the list", {
   workflow <- update_split(workflow, rsample::initial_split)
   expect_true("rsample::initial_split" %in% names(workflow$pre$actions$split))
 })
+
+
+test_that("add_split should return an object of class `rsplit`", {
+  # For add_split
+  fake_split <- function(x) unclass(rsample::initial_split(x))
+
+  workflow <- add_split(workflow(mtcars), fake_split)
+  workflow <- add_formula(workflow, mpg ~ cyl)
+  lm_model <- parsnip::linear_reg()
+  lm_model <- parsnip::set_engine(lm_model, "lm")
+  workflow <- add_model(workflow, lm_model)
+
+  expect_error(
+    fit(workflow),
+    regexp = "The split function should return an object of class `rsplit`"
+  )
+})
+
 
 # TODO
 # When you figure if you'll limit the order of operations

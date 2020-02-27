@@ -73,11 +73,11 @@ test_that("can pull a model fit", {
   model <- parsnip::linear_reg()
   model <- parsnip::set_engine(model, "lm")
 
-  workflow <- workflow()
+  workflow <- workflow(mtcars)
   workflow <- add_model(workflow, model)
   workflow <- add_formula(workflow, mpg ~ cyl)
 
-  workflow <- fit(workflow, mtcars)
+  workflow <- fit(workflow)
 
   expect_equal(
     pull_workflow_fit(workflow),
@@ -106,11 +106,11 @@ test_that("can pull a mold", {
   model <- parsnip::linear_reg()
   model <- parsnip::set_engine(model, "lm")
 
-  workflow <- workflow()
+  workflow <- workflow(mtcars)
   workflow <- add_model(workflow, model)
   workflow <- add_formula(workflow, mpg ~ cyl)
 
-  workflow <- fit(workflow, mtcars)
+  workflow <- fit(workflow)
 
   expect_is(pull_workflow_mold(workflow), "list")
 
@@ -137,25 +137,26 @@ test_that("error if not a workflow", {
 # ------------------------------------------------------------------------------
 # pull_workflow_prepped_recipe()
 
-test_that("can pull a prepped recipe", {
-  model <- parsnip::linear_reg()
-  model <- parsnip::set_engine(model, "lm")
+## TODO
+## test_that("can pull a prepped recipe", {
+##   model <- parsnip::linear_reg()
+##   model <- parsnip::set_engine(model, "lm")
 
-  recipe <- recipes::recipe(mpg ~ cyl, mtcars)
+##   recipe <- recipes::recipe(mpg ~ cyl, mtcars)
 
-  workflow <- workflow()
-  workflow <- add_model(workflow, model)
-  workflow <- add_recipe(workflow, recipe)
+##   workflow <- workflow(mtcars)
+##   workflow <- add_model(workflow, model)
+##   workflow <- add_recipe(workflow, recipe)
 
-  workflow <- fit(workflow, mtcars)
+##   workflow <- fit(workflow)
 
-  expect_is(pull_workflow_prepped_recipe(workflow), "recipe")
+##   expect_is(pull_workflow_prepped_recipe(workflow), "recipe")
 
-  expect_equal(
-    pull_workflow_prepped_recipe(workflow),
-    workflow$pre$mold$blueprint$recipe
-  )
-})
+##   expect_equal(
+##     pull_workflow_prepped_recipe(workflow),
+##     workflow$pre$mold$blueprint$recipe
+##   )
+## })
 
 test_that("error if no recipe preprocessor", {
   expect_error(
@@ -180,5 +181,21 @@ test_that("error if not a workflow", {
   expect_error(
     pull_workflow_prepped_recipe(1),
     "must be a workflow"
+  )
+})
+
+test_that("can pull the raw data", {
+  workflow <- workflow(mtcars)
+
+  expect_equal(
+    pull_workflow_rawdata(workflow),
+    mtcars
+  )
+})
+
+test_that("error if no raw data", {
+  expect_error(
+    pull_workflow_rawdata(workflow()),
+    "The workflow does not have data"
   )
 })

@@ -11,7 +11,7 @@ check_workflow <- function(workflow) {
   expect_is(workflow$fit, "stage_fit")
   expect_is(workflow$post, "stage_post")
   expect_equal(workflow$pre$actions, list())
-  expect_equal(workflow$pre$mold, NULL)
+  expect_equal(workflow$pre$mold, workflow$data)
   expect_equal(workflow$fit$actions, list())
   expect_equal(workflow$fit$fit, NULL)
   expect_equal(workflow$post$actions, list())
@@ -51,4 +51,3 @@ test_that("constructor validates input", {
 
   expect_error(new_workflow(trained = 1), "must be a single logical value")
 })
-

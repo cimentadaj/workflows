@@ -4,7 +4,8 @@
 #' - `add_model()` adds a parsnip model to the workflow.
 #'
 #' - `remove_model()` removes the model specification as well as any fitted
-#'   model object. Any extra formulas are also removed.
+#'   model object. Any extra formulas are also removed. Doesn't remove any steps
+#'   from the `pre` stage.
 #'
 #' - `update_model()` first removes the model then adds the new specification to
 #'   the workflow.
@@ -36,7 +37,7 @@
 #'
 #' regularized_model <- set_engine(lm_model, "glmnet")
 #'
-#' wf <- workflow()
+#' wf <- workflow(mtcars)
 #' wf <- add_model(wf, lm_model)
 #' wf
 #'
@@ -45,7 +46,7 @@
 #'
 #' remove_model(wf)
 #'
-#' fitted <- fit(wf, data = mtcars)
+#' fitted <- fit(wf)
 #' fitted
 #'
 #' remove_model(fitted)
@@ -71,7 +72,7 @@ remove_model <- function(x) {
 
   new_workflow(
     data = x$data,
-    pre = new_stage_pre(x$pre$actions),
+    pre = new_stage_pre(x$pre$actions, mold = x$pre$mold),
     fit = new_stage_fit(),
     post = new_stage_post(actions = x$post$actions),
     trained = FALSE
@@ -87,7 +88,6 @@ update_model <- function(x, spec, formula = NULL) {
 }
 
 # ------------------------------------------------------------------------------
-
 fit.action_model <- function(object, workflow, control) {
   control_parsnip <- control$control_parsnip
 
@@ -103,6 +103,7 @@ fit.action_model <- function(object, workflow, control) {
   if (is.null(formula)) {
     fit <- fit_from_xy(spec, mold, control_parsnip)
   } else {
+    mold <- cbind(mold$outcomes, mold$predictors)
     fit <- fit_from_formula(spec, mold, control_parsnip, formula)
   }
 
@@ -117,8 +118,7 @@ fit_from_xy <- function(spec, mold, control_parsnip) {
 }
 
 fit_from_formula <- function(spec, mold, control_parsnip, formula) {
-  data <- cbind(mold$outcomes, mold$predictors)
-  fit(spec, formula = formula, data = data, control = control_parsnip)
+  fit(spec, formula = formula, data = mold, control = control_parsnip)
 }
 
 # ------------------------------------------------------------------------------

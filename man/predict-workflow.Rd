@@ -57,6 +57,8 @@ parsnip model.
 }
 }
 \examples{
+# TODO
+\dontrun{
 library(parsnip)
 library(recipes)
 
@@ -79,4 +81,5 @@ fit_workflow <- fit(workflow, training)
 # This will automatically `bake()` the recipe on `testing`,
 # applying the log step to `disp`, and then fit the regression.
 predict(fit_workflow, testing)
+}
 }

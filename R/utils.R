@@ -101,3 +101,7 @@ purge_action_split <- function(x) {
 purge_action_resample <- function(x) {
   purge_action(x$pre$actions, "resample")
 }
+
+purge_action_formula <- function(x) {
+  purge_action(x$pre$actions, "formula")
+}
