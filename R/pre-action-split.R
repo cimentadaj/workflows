@@ -60,9 +60,9 @@
 #'
 add_split <- function(x, .f, ...) {
 
-  if (has_preprocessor_resample(x)) {
-    abort("A workflow must never have a resample before splitting the data")
-  }
+  ## if (has_preprocessor_resample(x)) {
+  ##   abort("A workflow must never have a resample before splitting the data")
+  ## }
 
   .dots <- enquos(...)
 
