@@ -150,3 +150,10 @@ test_that("Name of split function is always saved as name in the list", {
   workflow <- update_split(workflow, rsample::initial_split)
   expect_true("rsample::initial_split" %in% names(workflow$pre$actions$split))
 })
+
+test_that("Error when a resample is defined before a split", {
+  # For add_split
+  workflow <- add_resample(workflow(), rsample::vfold_cv)
+  expect_error(workflow %>% add_split(rsample::initial_split),
+               regexp = "A workflow must never have a resample before splitting the data") # nolintr
+})

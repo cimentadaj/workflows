@@ -59,6 +59,11 @@
 #' update_split(wf, initial_time_split)
 #'
 add_split <- function(x, .f, ...) {
+
+  if (has_preprocessor_resample(x)) {
+    abort("A workflow must never have a resample before splitting the data")
+  }
+
   .dots <- enquos(...)
 
   if (!is_uniquely_named(.dots)) {
