@@ -72,7 +72,7 @@ has_fit <- function(x) {
 }
 
 has_raw_data <- function(x) {
-  !is.null(x$data)
+  !is.null(x$data$raw_data)
 }
 
 

@@ -54,7 +54,7 @@ new_workflow <- function(data = NULL,
   }
 
   data <- list(
-    data = data,
+    data = list(raw_data = data, latest_data = data),
     pre = pre,
     fit = fit,
     post = post,
