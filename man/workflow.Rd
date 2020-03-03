@@ -23,10 +23,8 @@ to fit, specified through \code{\link[=add_model]{add_model()}}.
 \examples{
 library(recipes)
 
-rec <- recipe(mpg ~ cyl, mtcars)
-rec <- step_log(rec, cyl)
-
-wrk <- workflow()
+rec <- ~ recipe(mpg ~ cyl, .x) \%>\% step_log(cyl)
+wrk <- workflow(mtcars)
 wrk <- add_recipe(wrk, rec)
 
 }

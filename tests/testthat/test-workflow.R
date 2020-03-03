@@ -36,7 +36,7 @@ test_that("workflow can only begin with a data frame", {
 })
 
 test_that("workflow must be the first argument when adding actions", {
-  rec <- recipes::recipe(mpg ~ cyl, mtcars)
+  rec <- ~ recipes::recipe(mpg ~ cyl, .x)
   mod <- parsnip::linear_reg()
 
   expect_error(add_formula(1, mpg ~ cyl), "must be a workflow")

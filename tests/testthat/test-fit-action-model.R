@@ -22,27 +22,28 @@ test_that("cannot add two models", {
   expect_error(add_model(workflow, mod), "`model` action has already been added")
 })
 
-## TODO
-## When you make recipe work with workflows
-## test_that("can provide a model formula override", {
-##   # disp is in the recipe, but excluded from the model formula
-##   rec <- recipes::recipe(mpg ~ cyl + disp, mtcars)
-##   rec <- recipes::step_center(rec, cyl)
+test_that("can provide a model formula override", {
+  mod <- parsnip::linear_reg()
+  mod <- parsnip::set_engine(mod, "lm")
 
-##   mod <- parsnip::linear_reg()
-##   mod <- parsnip::set_engine(mod, "lm")
+  wflow <-
+    mtcars %>%
+    workflow() %>%
+    # disp is in the recipe, but excluded from the model formula
+    add_recipe(~ {
+      .x %>%
+        recipes::recipe(mpg ~ cyl + disp) %>%
+        recipes::step_center(cyl)
+    }) %>%
+    add_model(mod, formula = mpg ~ cyl)
 
-##   workflow <- workflow(mtcars)
-##   workflow <- add_recipe(workflow, rec)
-##   workflow <- add_model(workflow, mod, formula = mpg ~ cyl)
+  result <- fit(wflow)
 
-##   result <- fit(workflow)
-
-##   expect_equal(
-##     c("(Intercept)", "cyl"),
-##     names(result$fit$fit$fit$coefficients)
-##   )
-## })
+  expect_equal(
+    c("(Intercept)", "cyl"),
+    names(result$fit$fit$fit$coefficients)
+  )
+})
 
 
 test_that("remove a model", {

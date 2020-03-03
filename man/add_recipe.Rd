@@ -6,16 +6,23 @@
 \alias{update_recipe}
 \title{Add a recipe to a workflow}
 \usage{
-add_recipe(x, recipe, ..., blueprint = NULL)
+add_recipe(x, .f, ..., blueprint = NULL)
 
 remove_recipe(x)
 
-update_recipe(x, recipe, ..., blueprint = NULL)
+update_recipe(x, .f, ..., blueprint = NULL)
 }
 \arguments{
 \item{x}{A workflow}
 
-\item{recipe}{A recipe created using \code{\link[recipes:recipe]{recipes::recipe()}}}
+\item{.f}{A function or a formula
+
+If a \emph{function}, it is used as is.
+
+If a \emph{formula}, e.g. ‘~ recipe(mpg ~ cyl, data = .x)’, it is converted to a
+function. The only the first argument in the recipe function is passed
+to the data. Other arguments will be ignored. If a \emph{formula}, the argument
+name can be either \code{.} or \code{.x}. See the examples section for more details.}
 
 \item{...}{Not used.}
 
@@ -23,18 +30,18 @@ update_recipe(x, recipe, ..., blueprint = NULL)
 If \code{NULL}, \code{\link[hardhat:default_recipe_blueprint]{hardhat::default_recipe_blueprint()}} is used.}
 }
 \value{
-\code{x}, updated with either a new or removed recipe preprocessor.
+\code{x}, updated with either a new or removed recipe function.
 }
 \description{
 \itemize{
-\item \code{add_recipe()} specifies the terms of the model and any preprocessing that
-is required through the usage of a recipe.
-\item \code{remove_recipe()} removes the recipe as well as any downstream objects
-that might get created after the recipe is used for preprocessing, such as
-the prepped recipe. Additionally, if the model has already been fit, then
-the fit is removed.
-\item \code{update_recipe()} first removes the recipe, then replaces the previous
-recipe with the new one. Any model that has already been fit based on this
+\item \code{add_recipe()} specifies the type of recipe used in the analysis. It
+accepts a function \code{.f} that will be applied to the data. Only
+functions which return a \code{recipe} object will be allowed. See
+package \code{\link[recipes]{recipes}} for how to create a recipe.
+\item \code{remove_recipe()} removes the recipe function from the workflow. Note
+that it keeps other preprocessing steps such as the split and resample.
+\item \code{update_recipe()} first removes the recipe function, then adds the new
+recipe function. Any model that has already been fit based on this
 recipe will need to be refit.
 }
 }
@@ -44,16 +51,39 @@ specified, but not both.
 }
 \examples{
 library(recipes)
+library(parsnip)
 
-recipe <- recipe(mpg ~ cyl, mtcars)
-recipe <- step_log(recipe, cyl)
+recipe_fun <- function(.x) {
+  recipe(mpg ~ ., data = .x) \%>\%
+   step_center(all_predictors()) \%>\%
+   step_scale(all_predictors())
+}
 
-workflow <- workflow()
-workflow <- add_recipe(workflow, recipe)
-workflow
+# Specify an already created recipe function
+wflow <-
+ mtcars \%>\%
+ workflow() \%>\%
+ add_recipe(recipe_fun) \%>\%
+ add_model(set_engine(linear_reg(), "lm"))
 
-remove_recipe(workflow)
+# Fit the model
+wflow \%>\%
+ fit()
 
-update_recipe(workflow, recipe(mpg ~ cyl, mtcars))
+# Remove the old recipe, specify one on the fly and fit again
+wflow \%>\%
+ update_recipe(~ recipe(mpg ~ cyl, data = .) \%>\% step_log(cyl, base = 10)) \%>\%
+ fit()
+
+# Note how the function argument can be either `.` or `.x`
+wflow \%>\%
+ update_recipe(~ {
+  .x \%>\% 
+   recipe(mpg ~ cyl + am) \%>\%
+    step_log(cyl, base = 10) \%>\%
+    step_mutate(am = factor(am)) \%>\%
+    step_dummy(am)
+ }) \%>\%
+ fit()
 
 }

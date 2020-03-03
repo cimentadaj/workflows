@@ -31,21 +31,21 @@
 #' model <- linear_reg()
 #' model <- set_engine(model, "lm")
 #'
-#' base_workflow <- workflow(mtcars)
-#' base_workflow <- add_model(base_workflow, model)
-#'
-#' formula_workflow <- add_formula(base_workflow, mpg ~ cyl + log(disp))
-#'
+#' formula_workflow <-
+#'  mtcars %>%
+#'  workflow() %>%
+#'  add_formula(mpg ~ cyl + log(disp)) %>%
+#'  add_model(model)
+#' 
 #' fit(formula_workflow)
-#' # TODO
-#' \dontrun{
-#' recipe <- recipe(mpg ~ cyl + disp, mtcars)
-#' recipe <- step_log(recipe, disp)
 #'
-#' recipe_workflow <- add_recipe(base_workflow, recipe)
+#' recipe_workflow <-
+#'  formula_workflow %>%
+#'  remove_formula() %>% 
+#'  add_recipe(~ recipe(mpg ~ cyl + disp, .x) %>% step_log(disp))
 #'
-#' fit(recipe_workflow, mtcars)
-#' }
+#' fit(recipe_workflow)
+#'
 fit.workflow <- function(object, ..., control = control_workflow()) {
   workflow <- object
 
@@ -113,7 +113,7 @@ fit.workflow <- function(object, ..., control = control_workflow()) {
     action <- wflow[["pre"]]$actions[[i]]
 
     # Update the `wflow` as we iterate through pre steps
-    wflow <- fit(action, workflow = wflow)
+    wflow <- fit(action, wflow)
   }
 
   # But only return the wflow, it contains the final set of data in `mold`

@@ -1,23 +1,22 @@
-## TODO
-## test_that("can `fit()` a workflow with a recipe", {
-##   rec <- recipes::recipe(mpg ~ cyl, mtcars)
+test_that("can `fit()` a workflow with a recipe", {
+  mod <- parsnip::linear_reg()
+  mod <- parsnip::set_engine(mod, "lm")
 
-##   mod <- parsnip::linear_reg()
-##   mod <- parsnip::set_engine(mod, "lm")
+  wflow <-
+    mtcars %>%
+    workflow() %>%
+    add_recipe(~ recipes::recipe(mpg ~ cyl, .x)) %>%
+    add_model(mod)
 
-##   workflow <- workflow()
-##   workflow <- add_recipe(workflow, rec)
-##   workflow <- add_model(workflow, mod)
+  result <- fit(wflow)
 
-##   result <- fit(workflow, mtcars)
+  expect_is(result$fit$fit, "model_fit")
 
-##   expect_is(result$fit$fit, "model_fit")
-
-##   expect_equal(
-##     coef(result$fit$fit$fit),
-##     coef(lm(formula = mpg ~ cyl, data = mtcars))
-##   )
-## })
+  expect_equal(
+    coef(result$fit$fit$fit),
+    coef(lm(formula = mpg ~ cyl, data = mtcars))
+  )
+})
 
 test_that("can `fit()` a workflow with a formula", {
   mod <- parsnip::linear_reg()

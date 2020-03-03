@@ -100,7 +100,7 @@ test_that("Updating a split after removing one, warns", {
 test_that("Updating a split doesn't remove anything else", {
 
   # The recipe
-  workflow <- add_recipe(workflow(), recipes::recipe(mpg ~ cyl, data = mtcars))
+  workflow <- add_recipe(workflow(), ~ recipes::recipe(mpg ~ cyl, data = .x))
   workflow <- add_split(workflow, rsample::initial_split)
   workflow <- update_split(workflow, rsample::initial_time_split)
   expect_true(has_preprocessor_recipe(workflow))
@@ -117,7 +117,7 @@ test_that("Updating a split doesn't remove anything else", {
 test_that("Removing a split doesn't remove anything else", {
 
   # The recipe
-  workflow <- add_recipe(workflow(), recipes::recipe(mpg ~ cyl, data = mtcars))
+  workflow <- add_recipe(workflow(), ~ recipes::recipe(mpg ~ cyl, data = .x))
   workflow <- add_split(workflow, rsample::initial_split)
   workflow <- remove_split(workflow)
   expect_true(has_preprocessor_recipe(workflow))

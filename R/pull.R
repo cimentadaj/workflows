@@ -31,15 +31,10 @@
 #' library(parsnip)
 #' library(recipes)
 #'
-#' ## TODO: Once you hack the recipe to not using the data,
-#' ## remember to change this example to avoid specifying mtcars
-#' ## in the recipe.
-#' \dontrun{
 #' model <- linear_reg()
 #' model <- set_engine(model, "lm")
 #'
-#' recipe <- recipe(mpg ~ cyl + disp, mtcars)
-#' recipe <- step_log(recipe, disp)
+#' recipe <- ~ recipe(mpg ~ cyl + disp, .x) %>% step_log(disp)
 #'
 #' base_workflow <- workflow()
 #' base_workflow <- add_data(base_workflow, mtcars)
@@ -48,13 +43,13 @@
 #' recipe_workflow <- add_recipe(base_workflow, recipe)
 #' formula_workflow <- add_formula(base_workflow, mpg ~ cyl + log(disp))
 #'
-#' fit_recipe_workflow <- fit(recipe_workflow, mtcars)
-#' fit_formula_workflow <- fit(formula_workflow, mtcars)
+#' fit_recipe_workflow <- fit(recipe_workflow)
+#' fit_formula_workflow <- fit(formula_workflow)
 #'
 #' pull_workflow_rawdata(fit_recipe_workflow)
 #' pull_workflow_rawdata(fit_formula_workflow)
 #' 
-#' # The preprocessor is either a recipe or a formula
+#' # The preprocessor is either the recipe function or a formula
 #' pull_workflow_preprocessor(recipe_workflow)
 #' pull_workflow_preprocessor(formula_workflow)
 #'
@@ -76,7 +71,7 @@
 #'   pull_workflow_mold(fit_recipe_workflow)$blueprint$recipe,
 #'   pull_workflow_prepped_recipe(fit_recipe_workflow)
 #' )
-#' }
+#'
 NULL
 
 #' @rdname workflow-extractors

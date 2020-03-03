@@ -15,10 +15,8 @@
 #' @examples
 #' library(recipes)
 #'
-#' rec <- recipe(mpg ~ cyl, mtcars)
-#' rec <- step_log(rec, cyl)
-#'
-#' wrk <- workflow()
+#' rec <- ~ recipe(mpg ~ cyl, .x) %>% step_log(cyl)
+#' wrk <- workflow(mtcars)
 #' wrk <- add_recipe(wrk, rec)
 #'
 #' @export
@@ -176,9 +174,9 @@ print_preprocessor <- function(x) {
     print_preprocessor_formula(x)
   }
 
-  if (has_preprocessor_recipe) {
-    print_preprocessor_recipe(x)
-  }
+  ## if (has_preprocessor_recipe) {
+  ##   print_preprocessor_recipe(x)
+  ## }
 
   invisible(x)
 }
@@ -226,10 +224,11 @@ print_preprocessor_resample <- function(x) {
 }
 
 print_preprocessor_formula <- function(x) {
+  formula_msg <- cli::style_italic("Formula: ")
   formula <- pull_workflow_preprocessor(x)
   formula <- rlang::expr_text(formula)
 
-  cat_line(formula)
+  cat_line(glue::glue(formula_msg, formula))
 
   invisible(x)
 }
@@ -237,7 +236,6 @@ print_preprocessor_formula <- function(x) {
 print_preprocessor_recipe <- function(x) {
   recipe <- pull_workflow_preprocessor(x)
   steps <- recipe$steps
-
   n_steps <- length(steps)
 
   if (n_steps == 1L) {

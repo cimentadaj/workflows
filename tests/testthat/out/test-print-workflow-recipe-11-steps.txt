@@ -1,22 +1,8 @@
-> add_recipe(workflow(), rec)
+> add_recipe(workflow(), rcp_fun)
 == Workflow ====================================================================
 Data: None
 Preprocessor: Recipe
 Model: None
 
 -- Preprocessor ----------------------------------------------------------------
-11 Recipe Steps
-
-* step_log()
-* step_log()
-* step_log()
-* step_log()
-* step_log()
-* step_log()
-* step_log()
-* step_log()
-* step_log()
-* step_log()
-* ...
-* and 1 more step.
 

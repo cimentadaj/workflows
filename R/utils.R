@@ -105,3 +105,8 @@ purge_action_resample <- function(x) {
 purge_action_formula <- function(x) {
   purge_action(x$pre$actions, "formula")
 }
+
+
+purge_action_recipe <- function(x) {
+  purge_action(x$pre$actions, "recipe")
+}

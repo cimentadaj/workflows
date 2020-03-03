@@ -6,7 +6,7 @@ test_that("can print empty workflow", {
 })
 
 test_that("can print workflow with recipe", {
-  rec <- recipes::recipe(mtcars)
+  rec <- ~ recipes::recipe(.x)
 
   verify_output(
     test_path("out/test-print-workflow-recipe.txt"),
@@ -55,30 +55,47 @@ test_that("can print workflow with fit model", {
 })
 
 test_that("can print workflow with >10 recipe steps", {
-  rec <- recipes::recipe(mpg~cyl, mtcars)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
-  rec <- recipes::step_log(rec, cyl)
 
-  add_recipe(workflow(), rec)
+  rcp_fun <- function(.x) {
+    rec <- recipes::recipe(mpg ~ cyl, .x)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+  }
 
   verify_output(
     test_path("out/test-print-workflow-recipe-11-steps.txt"),
-    add_recipe(workflow(), rec)
+    add_recipe(workflow(), rcp_fun)
   )
 
-  rec <- recipes::step_log(rec, cyl)
+
+  rcp_fun <- function(.x) {
+    rec <- recipes::recipe(mpg ~ cyl, .x)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    rec <- recipes::step_log(rec, cyl)
+    # One more step
+    rec <- recipes::step_log(rec, cyl)
+  }
 
   verify_output(
     test_path("out/test-print-workflow-recipe-12-steps.txt"),
-    add_recipe(workflow(), rec)
+    add_recipe(workflow(), rcp_fun)
   )
 })

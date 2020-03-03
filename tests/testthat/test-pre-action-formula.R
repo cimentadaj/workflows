@@ -10,7 +10,7 @@ test_that("formula is validated", {
 })
 
 test_that("cannot add a formula if a recipe already exists", {
-  rec <- recipes::recipe(mpg ~ cyl, mtcars)
+  rec <- ~ recipes::recipe(mpg ~ cyl, .x)
 
   workflow <- workflow()
   workflow <- add_recipe(workflow, rec)
@@ -48,7 +48,8 @@ test_that("cannot add two formulas", {
   workflow <- workflow()
   workflow <- add_formula(workflow, mpg ~ cyl)
 
-  expect_error(add_formula(workflow, mpg ~ cyl), "`formula` action has already been added")
+  expect_error(add_formula(workflow, mpg ~ cyl),
+               "`formula` action has already been added")
 })
 
 test_that("remove a formula", {

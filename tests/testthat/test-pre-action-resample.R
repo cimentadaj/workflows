@@ -120,7 +120,7 @@ test_that("Updating a resample doesn't remove anything else", {
 
   
   # The recipe
-  workflow <- add_recipe(workflow(), recipes::recipe(mpg ~ cyl, data = mtcars))
+  workflow <- add_recipe(workflow(), ~ recipes::recipe(mpg ~ cyl, data = .x))
   workflow <- add_resample(workflow, rsample::bootstraps)
   workflow <- update_resample(workflow, rsample::vfold_cv)
   expect_true(has_preprocessor_recipe(workflow))
@@ -137,7 +137,7 @@ test_that("Removing a resample doesn't remove anything else", {
   expect_true(has_preprocessor_split(workflow))
 
   # The recipe
-  workflow <- add_recipe(workflow(), recipes::recipe(mpg ~ cyl, data = mtcars))
+  workflow <- add_recipe(workflow(), ~ recipes::recipe(mpg ~ cyl, data = .x))
   workflow <- add_resample(workflow, rsample::bootstraps)
   workflow <- remove_resample(workflow)
   expect_true(has_preprocessor_recipe(workflow))

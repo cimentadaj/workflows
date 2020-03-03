@@ -1,16 +1,16 @@
 #' Add a recipe to a workflow
 #'
 #' @description
-#' - `add_recipe()` specifies the terms of the model and any preprocessing that
-#'   is required through the usage of a recipe.
+#' - `add_recipe()` specifies the type of recipe used in the analysis. It
+#'   accepts a function \code{.f} that will be applied to the data. Only
+#'   functions which return a \code{recipe} object will be allowed. See
+#'   package \code{\link[recipes]{recipes}} for how to create a recipe.
 #'
-#' - `remove_recipe()` removes the recipe as well as any downstream objects
-#'   that might get created after the recipe is used for preprocessing, such as
-#'   the prepped recipe. Additionally, if the model has already been fit, then
-#'   the fit is removed.
+#' - `remove_recipe()` removes the recipe function from the workflow. Note
+#'   that it keeps other preprocessing steps such as the split and resample.
 #'
-#' - `update_recipe()` first removes the recipe, then replaces the previous
-#'   recipe with the new one. Any model that has already been fit based on this
+#' - `update_recipe()` first removes the recipe function, then adds the new
+#'   recipe function. Any model that has already been fit based on this
 #'   recipe will need to be refit.
 #'
 #' @details
@@ -18,36 +18,73 @@
 #' specified, but not both.
 #'
 #' @param x A workflow
+#' 
+#' @param .f A function or a formula
 #'
-#' @param recipe A recipe created using [recipes::recipe()]
+#' If a *function*, it is used as is.
 #'
+#' If a *formula*, e.g. ‘~ recipe(mpg ~ cyl, data = .x)’, it is converted to a
+#' function. The only the first argument in the recipe function is passed
+#' to the data. Other arguments will be ignored. If a *formula*, the argument
+#' name can be either `.` or `.x`. See the examples section for more details.
+#' 
 #' @param ... Not used.
 #'
 #' @param blueprint A hardhat blueprint used for fine tuning the preprocessing.
 #'   If `NULL`, [hardhat::default_recipe_blueprint()] is used.
 #'
 #' @return
-#' `x`, updated with either a new or removed recipe preprocessor.
+#' `x`, updated with either a new or removed recipe function.
 #'
 #' @export
 #' @examples
 #' library(recipes)
+#' library(parsnip)
 #'
-#' recipe <- recipe(mpg ~ cyl, mtcars)
-#' recipe <- step_log(recipe, cyl)
+#' recipe_fun <- function(.x) {
+#'   recipe(mpg ~ ., data = .x) %>%
+#'    step_center(all_predictors()) %>%
+#'    step_scale(all_predictors())
+#' }
 #'
-#' workflow <- workflow()
-#' workflow <- add_recipe(workflow, recipe)
-#' workflow
+#' # Specify an already created recipe function
+#' wflow <-
+#'  mtcars %>%
+#'  workflow() %>%
+#'  add_recipe(recipe_fun) %>%
+#'  add_model(set_engine(linear_reg(), "lm"))
+#' 
+#' # Fit the model
+#' wflow %>%
+#'  fit()
 #'
-#' remove_recipe(workflow)
+#' # Remove the old recipe, specify one on the fly and fit again
+#' wflow %>%
+#'  update_recipe(~ recipe(mpg ~ cyl, data = .) %>% step_log(cyl, base = 10)) %>%
+#'  fit()
 #'
-#' update_recipe(workflow, recipe(mpg ~ cyl, mtcars))
-#'
-add_recipe <- function(x, recipe, ..., blueprint = NULL) {
+#' # Note how the function argument can be either `.` or `.x`
+#' wflow %>%
+#'  update_recipe(~ {
+#'   .x %>% 
+#'    recipe(mpg ~ cyl + am) %>%
+#'     step_log(cyl, base = 10) %>%
+#'     step_mutate(am = factor(am)) %>%
+#'     step_dummy(am)
+#'  }) %>%
+#'  fit()
+#' 
+add_recipe <- function(x, .f, ..., blueprint = NULL) {
   ellipsis::check_dots_empty()
   validate_recipes_available()
-  action <- new_action_recipe(recipe, blueprint)
+
+  ## For when `...` is supported
+  ## .dots <- enquos(...)
+  ## if (!is_uniquely_named(.dots)) {
+  ##   abort("Arguments in `...` for `.f` should be named")
+  ## }
+
+  action <- new_action_recipe(.f, blueprint)
   add_action(x, action, "recipe")
 }
 
@@ -62,7 +99,7 @@ remove_recipe <- function(x) {
 
   new_workflow(
     data = x$data,
-    pre = new_stage_pre(),
+    pre = new_stage_pre(purge_action_recipe(x), mold = x$data),
     fit = new_stage_fit(actions = x$fit$actions),
     post = new_stage_post(actions = x$post$actions),
     trained = FALSE
@@ -71,22 +108,30 @@ remove_recipe <- function(x) {
 
 #' @rdname add_recipe
 #' @export
-update_recipe <- function(x, recipe, ..., blueprint = NULL) {
+update_recipe <- function(x, .f, ..., blueprint = NULL) {
   ellipsis::check_dots_empty()
   x <- remove_recipe(x)
-  add_recipe(x, recipe, blueprint = blueprint)
+  add_recipe(x, .f, blueprint = blueprint)
 }
 
 # ------------------------------------------------------------------------------
 
-fit.action_recipe <- function(object, workflow, data) {
-  recipe <- object$recipe
+fit.action_recipe <- function(object, wflow) {
+  recipe_fun <- object$recipe
   blueprint <- object$blueprint
+  molded_data <- wflow$pre$mold
+  rcp_data <- recipe_fun(molded_data)
 
-  workflow$pre$mold <- hardhat::mold(recipe, data, blueprint = blueprint)
+  if (!is_recipe(rcp_data)) {
+    abort("The recipe function `.f` should return an object of class `recipe`")
+  }
 
-  # All pre steps return the `workflow` and `data`
-  list(workflow = workflow, data = data)
+  wflow$pre$mold <- hardhat::mold(rcp_data,
+                                  molded_data,
+                                  blueprint = blueprint)
+
+  # All pre steps return the `workflow`
+  wflow
 }
 
 # ------------------------------------------------------------------------------
@@ -103,9 +148,11 @@ check_conflicts.action_recipe <- function(action, x) {
 
 # ------------------------------------------------------------------------------
 
-new_action_recipe <- function(recipe, blueprint) {
-  if (!is_recipe(recipe)) {
-    abort("`recipe` must be a recipe.")
+new_action_recipe <- function(.f, blueprint) {
+  .f <- try(rlang::as_function(.f), silent = TRUE)
+
+  if (inherits(.f, "try-error")) {
+    abort("`.f` must be a function with a recipe for applying to the dataset")
   }
 
   if (is.null(blueprint)) {
@@ -115,7 +162,7 @@ new_action_recipe <- function(recipe, blueprint) {
   }
 
   new_action_pre(
-    recipe = recipe,
+    recipe = .f,
     blueprint = blueprint,
     subclass = "action_recipe"
   )
