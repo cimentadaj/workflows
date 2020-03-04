@@ -11,7 +11,8 @@
 \item{object}{A workflow that has been fit by \code{\link[=fit.workflow]{fit.workflow()}}}
 
 \item{new_data}{A data frame containing the new predictors to preprocess
-and predict on}
+and predict on. Usually, this would be extracted from the workflow
+with \code{\link{pull_workflow_testing}}}
 
 \item{type}{A single character value or \code{NULL}. Possible values
 are "numeric", "class", "prob", "conf_int", "pred_int", "quantile",
@@ -42,44 +43,44 @@ Default value is \code{FALSE}.
 }}
 }
 \value{
-A data frame of model predictions, with as many rows as \code{new_data} has.
+A data frame of model predictions, with as many rows as \code{new_data} has,
+if \code{new_data} was specified, or a data frame of model predictions with
+as many rows as the testing data extracted with the split specification.
 }
 \description{
 This is the \code{predict()} method for a fit workflow object. The nice thing
 about predicting from a workflow is that it will:
 \itemize{
 \item Preprocess \code{new_data} using the preprocessing method specified when the
-workflow was created and fit. This is accomplished using
-\code{\link[hardhat:forge]{hardhat::forge()}}, which will apply any formula preprocessing or call
-\code{\link[recipes:bake]{recipes::bake()}} if a recipe was supplied.
+workflow was created and fit. This is accomplished using \link[=forge]{ hardhat::forge()}, which will apply any formula preprocessing or call
+\code{\link[recipes:bake]{recipes::bake()}} if a recipe was supplied. For safety reasons,
+if a split was specified, the user should always use
+\code{\link{pull_workflow_testing}} to extract the raw testing data
+from the workflow and pass it to \code{new_data}.
 \item Call \code{\link[parsnip:predict.model_fit]{parsnip::predict.model_fit()}} for you using the underlying fit
 parsnip model.
 }
 }
 \examples{
-# TODO
-\dontrun{
 library(parsnip)
 library(recipes)
-
-training <- mtcars[1:20,]
-testing <- mtcars[21:32,]
+library(rsample)
 
 model <- linear_reg()
 model <- set_engine(model, "lm")
 
-workflow <- workflow()
-workflow <- add_model(workflow, model)
+wflow <- workflow(mtcars)
+wflow <- add_split(wflow, initial_split)
+wflow <- add_model(wflow, model)
 
-recipe <- recipe(mpg ~ cyl + disp, training)
-recipe <- step_log(recipe, disp)
+rcp <- ~ step_log(recipe(mpg ~ cyl + disp, .), disp)
 
-workflow <- add_recipe(workflow, recipe)
+wflow <- add_recipe(wflow, rcp)
 
-fit_workflow <- fit(workflow, training)
+wflow <- fit(wflow)
 
-# This will automatically `bake()` the recipe on `testing`,
+# This will automatically `bake()` the recipe on `new_data`,
 # applying the log step to `disp`, and then fit the regression.
-predict(fit_workflow, testing)
-}
+predict(wflow, new_data = pull_workflow_testing(wflow))
+
 }

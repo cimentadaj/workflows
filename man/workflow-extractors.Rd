@@ -8,6 +8,7 @@
 \alias{pull_workflow_fit}
 \alias{pull_workflow_mold}
 \alias{pull_workflow_prepped_recipe}
+\alias{pull_workflow_testing}
 \title{Extract elements of a workflow}
 \usage{
 pull_workflow_rawdata(x)
@@ -21,6 +22,8 @@ pull_workflow_fit(x)
 pull_workflow_mold(x)
 
 pull_workflow_prepped_recipe(x)
+
+pull_workflow_testing(x)
 }
 \arguments{
 \item{x}{A workflow}
@@ -43,6 +46,10 @@ from \code{\link[hardhat:mold]{hardhat::mold()}}. It contains information about 
 including either the prepped recipe or the formula terms object.
 \item \code{pull_workflow_prepped_recipe()} returns the prepped recipe. It is
 extracted from the mold object returned from \code{pull_workflow_mold()}.
+\item \code{pull_workflow_testing()} returns the raw testing data (without applying
+the preprocessing steps recipe or formula). Since the split
+training/testing is done when the user \verb{fit()'s the model, the testing data can only be extracted after a model fit. The prepping of the testing data is done when specifying }new_data\verb{in}predict.workflow`
+automatically.
 }
 }
 \examples{

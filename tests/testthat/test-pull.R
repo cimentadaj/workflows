@@ -200,3 +200,45 @@ test_that("error if no raw data", {
     "The workflow does not have data"
   )
 })
+
+
+check_testing <- function(x) {
+  expect_equal(
+    nrow(pull_workflow_testing(x)),
+    8
+  )
+
+  expect_equal(
+    ncol(pull_workflow_testing(x)),
+    11
+  )
+
+}
+
+test_that("can pull testing data", {
+  model <- parsnip::set_engine(parsnip::linear_reg(), "lm")
+  workflow <- add_recipe(workflow(mtcars), ~ recipes::recipe(mpg ~ cyl, .))
+  workflow <- add_model(workflow, model)
+
+  res <- fit(workflow)
+
+  expect_error(
+    pull_workflow_testing(res),
+    "The workflow must have a split preprocessor."
+  )
+
+  # Add split. The testing should have 8 rows (75%)
+  res <- fit(add_split(res, rsample::initial_split))
+
+  check_testing(res)
+
+  expect_error(
+    pull_workflow_testing(remove_recipe(res)),
+    "Workflow has not yet been trained. Do you need to call `fit()`?"
+  )
+
+  res <- fit(add_formula(remove_recipe(res), mpg ~ cyl))
+  # The data is refit the same way with a formula
+  check_testing(res)
+
+})

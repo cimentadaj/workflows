@@ -96,56 +96,76 @@ test_that("formula preprocessing is done with split to the `new_data`", {
   expect_equal(result1, result2)
 })
 
-## TODO
-## test_that("recipe preprocessing is done to the `new_data`", {
-##   mod <- parsnip::linear_reg()
-##   mod <- parsnip::set_engine(mod, "lm")
+test_that("recipe preprocessing is done to the `new_data`", {
+  mod <- parsnip::linear_reg()
+  mod <- parsnip::set_engine(mod, "lm")
+  rec <- ~ recipes::step_log(recipes::recipe(mpg ~ cyl, .), cyl)
+  workflow <- workflow(mtcars)
+  workflow <- add_recipe(workflow, rec)
+  workflow <- add_model(workflow, mod)
 
-##   rec <- recipes::recipe(mpg ~ cyl, mtcars)
-##   rec <- recipes::step_log(rec, cyl)
+  fit_workflow <- fit(workflow)
+  result1 <- predict(fit_workflow, mtcars)
 
-##   workflow <- workflow()
-##   workflow <- add_recipe(workflow, rec)
-##   workflow <- add_model(workflow, mod)
+  # pre-log the data
+  mtcars_with_log <- mtcars
+  mtcars_with_log$cyl <- log(mtcars_with_log$cyl)
 
-##   fit_workflow <- fit(workflow, mtcars)
+  workflow <- workflow(mtcars_with_log)
+  workflow <- add_formula(workflow, mpg ~ cyl)
+  workflow <- add_model(workflow, mod)
 
-##   result1 <- predict(fit_workflow, mtcars)
+  fit_workflow <- fit(workflow)
 
-##   # pre-log the data
-##   mtcars_with_log <- mtcars
-##   mtcars_with_log$cyl <- log(mtcars_with_log$cyl)
+  result2 <- predict(fit_workflow, mtcars_with_log)
 
-##   workflow <- workflow()
-##   workflow <- add_formula(workflow, mpg ~ cyl)
-##   workflow <- add_model(workflow, mod)
+  expect_equal(result1, result2)
+})
 
-##   fit_workflow <- fit(workflow, mtcars_with_log)
+test_that("`new_data` must have all of the original predictors", {
+  mod <- parsnip::linear_reg()
+  mod <- parsnip::set_engine(mod, "lm")
+  rec <- ~ recipes::step_log(recipes::recipe(mpg ~ cyl, .), cyl)
+  workflow <- workflow(mtcars)
+  workflow <- add_recipe(workflow, rec)
+  workflow <- add_model(workflow, mod)
 
-##   result2 <- predict(fit_workflow, mtcars_with_log)
+  fit_workflow <- fit(workflow)
 
-##   expect_equal(result1, result2)
-## })
+  cars_no_cyl <- mtcars
+  cars_no_cyl$cyl <- NULL
 
-## TODO
-## test_that("`new_data` must have all of the original predictors", {
-##   mod <- parsnip::linear_reg()
-##   mod <- parsnip::set_engine(mod, "lm")
+  expect_error(predict(fit_workflow, cars_no_cyl), "missing: 'cyl'")
+})
 
-##   rec <- recipes::recipe(mpg ~ cyl, mtcars)
-##   rec <- recipes::step_log(rec, cyl)
 
-##   workflow <- workflow()
-##   workflow <- add_recipe(workflow, rec)
-##   workflow <- add_model(workflow, mod)
+test_that("predict without split and new_data raises error", {
+  mod <- parsnip::linear_reg()
+  mod <- parsnip::set_engine(mod, "lm")
+  rec <- ~ recipes::step_log(recipes::recipe(mpg ~ cyl, .), cyl)
+  workflow <- workflow(mtcars)
+  workflow <- add_recipe(workflow, rec)
+  workflow <- add_model(workflow, mod)
 
-##   fit_workflow <- fit(workflow, mtcars)
+  fit_workflow <- fit(workflow)
+  expect_error(predict(fit_workflow),
+               'argument "new_data" is missing, with no default') #nolintr
+})
 
-##   cars_no_cyl <- mtcars
-##   cars_no_cyl$cyl <- NULL
 
-##   expect_error(predict(fit_workflow, cars_no_cyl), "missing: 'cyl'")
-## })
+test_that("predict without split but with new_data works", {
+  mod <- parsnip::linear_reg()
+  mod <- parsnip::set_engine(mod, "lm")
+  rec <- ~ recipes::step_log(recipes::recipe(mpg ~ cyl, .), cyl)
+  workflow <- workflow(mtcars)
+  workflow <- add_recipe(workflow, rec)
+  workflow <- add_model(workflow, mod)
+
+  fit_workflow <- fit(workflow)
+  res <- predict(fit_workflow, new_data = mtcars)
+  expect_equal(nrow(res), 32)
+})
+
 
 test_that("blueprint will get passed on to hardhat::forge()", {
   mod <- parsnip::linear_reg()

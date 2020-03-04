@@ -20,7 +20,15 @@
 #' - `pull_workflow_prepped_recipe()` returns the prepped recipe. It is
 #'   extracted from the mold object returned from `pull_workflow_mold()`.
 #'
+#' - `pull_workflow_testing()` returns the raw testing data (without applying
+#'   the preprocessing steps recipe or formula). Since the split
+#'   training/testing is done when the user `fit()'s the model, the testing
+#'   data can only be extracted after a model fit. The prepping of the testing
+#'   data is done when specifying `new_data` in `predict.workflow`
+#'   automatically.
+#'
 #' @param x A workflow
+#'
 #'
 #' @return
 #' The extracted value from the workflow, `x`, as described in the description
@@ -151,4 +159,21 @@ pull_workflow_prepped_recipe <- function(x) {
   mold <- pull_workflow_mold(x)
 
   mold$blueprint$recipe
+}
+
+#' @rdname workflow-extractors
+#' @export
+pull_workflow_testing <- function(x) {
+  validate_is_workflow(x)
+
+  if (!has_preprocessor_split(x)) {
+    abort("The workflow must have a split preprocessor.")
+  }
+
+  if (!x$trained) {
+    abort("Workflow has not yet been trained. Do you need to call `fit()`?")
+  }
+
+  test_data <- x$pre$actions$split$testing
+  test_data
 }
