@@ -4,7 +4,8 @@
 #' - `add_split()` specifies the type of splitting used in the analysis. It
 #'   accepts a function \code{.f} that will be applied to the data. Only
 #'   functions which return an \code{rsplit} object will be allowed. See
-#'   package \code{\link[rsample]{rsample}} and the details section.
+#'   package \code{\link[rsample]{rsample}} and the details section. If a model
+#'   has been fit before adding the split, it will need to be refit.
 #'
 #' - `remove_split()` removes the split specification from the workflow. Note
 #'   that it keeps other preprocessing steps such as the recipe.
@@ -59,6 +60,10 @@
 #' update_split(wf, initial_time_split)
 #'
 add_split <- function(x, .f, ...) {
+
+  ## In case you fit the model and **then** add a split.
+  ## This fun removes everything.
+  x <- update_fit(x)
 
   ## if (has_preprocessor_resample(x)) {
   ##   abort("A workflow must never have a resample before splitting the data")
@@ -123,6 +128,7 @@ fit.action_split <- function(object, workflow) {
   }
 
   workflow$pre$mold <- rsample::training(split_res)
+  workflow$pre$actions$split$testing <- rsample::testing(split_res)
   
   # All pre steps return the `wflow`
   workflow
@@ -141,4 +147,19 @@ new_action_split <- function(.f, .dots, name_f) {
     args = .dots,
     subclass = "action_split"
   )
+}
+
+update_fit <- function(x) {
+  if (x$trained) {
+    x <-
+      new_workflow(
+        data = x$data,
+        pre = new_stage_pre(actions = x$pre$actions, mold = x$data),
+        fit = new_stage_fit(actions = x$fit$actions),
+        post = new_stage_post(actions = x$post$actions),
+        trained = FALSE
+      )
+  }
+
+  x
 }

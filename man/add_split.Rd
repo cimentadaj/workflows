@@ -32,7 +32,8 @@ as names, the user can specify both. See the example sections.}
 \item \code{add_split()} specifies the type of splitting used in the analysis. It
 accepts a function \code{.f} that will be applied to the data. Only
 functions which return an \code{rsplit} object will be allowed. See
-package \code{\link[rsample]{rsample}} and the details section.
+package \code{\link[rsample]{rsample}} and the details section. If a model
+has been fit before adding the split, it will need to be refit.
 \item \code{remove_split()} removes the split specification from the workflow. Note
 that it keeps other preprocessing steps such as the recipe.
 \item \code{update_split()} first removes the split, then adds a new split

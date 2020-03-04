@@ -18,6 +18,19 @@ test_that("remove a split specification", {
   expect_equal(workflow_no_split$pre, workflow_removed_split$pre)
 })
 
+
+test_that("Saves testing data after split", {
+  lm_model <- parsnip::linear_reg()
+  lm_model <- parsnip::set_engine(lm_model, "lm")
+  workflow_with_split  <- add_split(workflow(mtcars), rsample::initial_split)
+  workflow_with_split <- add_recipe(workflow_with_split, ~ recipes::recipe(mpg ~ cyl, .))
+  workflow_with_split  <- add_model(workflow_with_split, lm_model)
+  workflow_with_split <- fit(workflow_with_split)
+
+  expect_true(!is.null(workflow_with_split$pre$actions$split$testing))
+})
+
+
 test_that("remove a split after model fit", {
   lm_model <- parsnip::linear_reg()
   lm_model <- parsnip::set_engine(lm_model, "lm")
@@ -156,6 +169,23 @@ test_that("add_split should return an object of class `rsplit`", {
     fit(workflow),
     regexp = "The split function should return an object of class `rsplit`"
   )
+})
+
+test_that("add_split resets model fit if trained before adding the split", {
+  model <- parsnip::set_engine(parsnip::linear_reg(), "lm")
+  workflow <- add_recipe(workflow(mtcars), ~ recipes::recipe(mpg ~ cyl, .))
+  workflow <- add_model(workflow, model)
+  workflow <- fit(workflow)
+
+  workflow <- add_split(workflow, rsample::initial_split)
+  expect_false(workflow$trained)
+  expect_equal(workflow$data, workflow$pre$mold)
+  expect_null(workflow$fit$fit)
+
+  res <- fit(workflow)
+  # Fitted on the training data
+  expect_equal(nrow(pull_workflow_mold(res)$predictors), 24)
+  expect_equal(nrow(pull_workflow_mold(res)$outcomes), 24)
 })
 
 
