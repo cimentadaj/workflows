@@ -110,3 +110,7 @@ purge_action_formula <- function(x) {
 purge_action_recipe <- function(x) {
   purge_action(x$pre$actions, "recipe")
 }
+
+combine_outcome_preds <- function(mold) {
+  cbind(mold$outcomes, mold$predictors)
+}

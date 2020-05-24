@@ -26,7 +26,7 @@ test_that("can predict from workflow + split", {
   fit_workflow <- fit(workflow)
 
   semi_mold <- fit_workflow$pre$mold
-  mold <- cbind(semi_mold$outcomes, semi_mold$predictors)
+  mold <- combine_outcome_preds(semi_mold)
 
   result <- predict(fit_workflow, mold)
 

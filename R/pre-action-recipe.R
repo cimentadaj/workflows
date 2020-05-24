@@ -126,6 +126,8 @@ fit.action_recipe <- function(object, wflow) {
     abort("The recipe function `.f` should return an object of class `recipe`")
   }
 
+  # Keep recipe around
+  wflow$pre$actions$recipe$recipe_res <- rcp_data
   wflow$pre$mold <- hardhat::mold(rcp_data,
                                   molded_data,
                                   blueprint = blueprint)

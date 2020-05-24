@@ -123,9 +123,7 @@ test_that("model fit works correctly after updating recipe", {
   expect_equal(workflow$pre$actions$recipe$recipe,
                rlang::as_function(rcp))
 
-
-  prepped_data <- cbind(workflow$pre$mold$outcomes,
-                        workflow$pre$mold$predictors)
+  prepped_data <- combine_outcome_preds(workflow$pre$mold)
 
   expect_equal(
     prepped_data$disp,
@@ -228,9 +226,7 @@ test_that("recipe is applied on training data", {
 
   fit_mod <- fit(workflow)
 
-  prepped_data <- cbind(fit_mod$pre$mold$outcomes,
-                        fit_mod$pre$mold$predictors)
-
+  prepped_data <- combine_outcome_preds(fit_mod$pre$mold)
   
   expect_equal(
     nrow(prepped_data),

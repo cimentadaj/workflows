@@ -46,6 +46,7 @@
 #'
 #' fit(recipe_workflow)
 #'
+
 fit.workflow <- function(object, ..., control = control_workflow()) {
   workflow <- object
 

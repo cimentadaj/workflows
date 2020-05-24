@@ -88,13 +88,26 @@ update_model <- function(x, spec, formula = NULL) {
 }
 
 # ------------------------------------------------------------------------------
-fit.action_model <- function(object, workflow, control) {
+fit.action_model <- function(object, wflow, control, ...) {
   control_parsnip <- control$control_parsnip
-
   spec <- object$spec
   formula <- object$formula
+  resample_res <- wflow$pre$actions$resample$rset_res
 
-  mold <- workflow$pre$mold
+  # It means that they specified a resample
+  if (!is.null(resample_res)) {
+    obj <- wflow$pre$actions$recipe$recipe_res %||% wflow$pre$actions$formula
+
+    resampled <-
+      tune::fit_resamples(obj,
+                          model = spec,
+                          resamples = resample_res,
+                          control = control,
+                          ...
+                          )
+  }
+
+  mold <- wflow$pre$mold
 
   if (is.null(mold)) {
     abort("Internal error: No mold exists. `workflow` pre stage has not been run.")
@@ -103,14 +116,14 @@ fit.action_model <- function(object, workflow, control) {
   if (is.null(formula)) {
     fit <- fit_from_xy(spec, mold, control_parsnip)
   } else {
-    mold <- cbind(mold$outcomes, mold$predictors)
+    mold <- combine_outcome_preds(mold)
     fit <- fit_from_formula(spec, mold, control_parsnip, formula)
   }
 
-  workflow$fit$fit <- fit
+  wflow$fit$fit <- fit
 
   # Only the workflow is returned
-  workflow
+  wflow
 }
 
 fit_from_xy <- function(spec, mold, control_parsnip) {

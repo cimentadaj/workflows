@@ -101,13 +101,33 @@ update_resample <- function(x, .f, ...) {
 
 # ------------------------------------------------------------------------------
 
-## fit.action_recipe <- function(object, workflow, data) {
-##   recipe <- object$recipe
-##   blueprint <- object$blueprint
-##   workflow$pre$mold <- hardhat::mold(recipe, data, blueprint = blueprint)
-##   # All pre steps return the `workflow` and `data`
-##   list(workflow = workflow, data = data)
-## }
+fit.action_resample <- function(object, wflow) {
+
+  # Since a workflow will alows need to have a formula or recipe
+  # the result of mold when it reaches a resample, will always be
+  # a mold structure. Let's convert that to a data frame
+  mold <- combine_outcome_preds(wflow$pre$mold)
+
+  ## object[[2]] are the arguments as quosures
+  args <- lapply(object[[2]], eval_tidy)
+
+  resample_res <- rlang::exec(
+    # function body
+    object[[1]],
+    # function args
+    mold,
+    !!!args
+  )
+
+  if (!inherits(resample_res, "rset")) {
+    abort("The resample function should return an object of class `rset`.")
+  }
+
+  wflow$pre$actions$resample$rset_res <- resample_res
+  
+  # All pre steps return the `wflow`
+  wflow
+}
 
 # Exclude blueprint; it doesn't apply to data
 new_action_resample <- function(.f, .dots, name_f) {

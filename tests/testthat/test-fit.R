@@ -50,7 +50,7 @@ test_that("can `fit()` a workflow + split + formula", {
   expect_is(result$fit$fit, "model_fit")
 
   semi_mold <- result$pre$mold
-  converted_mold <- cbind(semi_mold$outcomes, semi_mold$predictors)
+  converted_mold <- combine_outcome_preds(semi_mold)
   
   expect_equal(
     coef(result$fit$fit$fit),
