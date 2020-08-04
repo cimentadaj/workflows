@@ -2,17 +2,13 @@
 % Please edit documentation in R/pull.R
 \name{workflow-extractors}
 \alias{workflow-extractors}
-\alias{pull_workflow_rawdata}
 \alias{pull_workflow_preprocessor}
 \alias{pull_workflow_spec}
 \alias{pull_workflow_fit}
 \alias{pull_workflow_mold}
 \alias{pull_workflow_prepped_recipe}
-\alias{pull_workflow_testing}
 \title{Extract elements of a workflow}
 \usage{
-pull_workflow_rawdata(x)
-
 pull_workflow_preprocessor(x)
 
 pull_workflow_spec(x)
@@ -22,8 +18,6 @@ pull_workflow_fit(x)
 pull_workflow_mold(x)
 
 pull_workflow_prepped_recipe(x)
-
-pull_workflow_testing(x)
 }
 \arguments{
 \item{x}{A workflow}
@@ -36,7 +30,6 @@ section.
 These functions extract various elements from a workflow object. If they do
 not exist yet, an error is thrown.
 \itemize{
-\item \code{pull_workflow_rawdata()} returns the complete raw/untrained data.
 \item \code{pull_workflow_preprocessor()} returns either the formula or recipe used
 for preprocessing.
 \item \code{pull_workflow_spec()} returns the parsnip model specification.
@@ -46,55 +39,48 @@ from \code{\link[hardhat:mold]{hardhat::mold()}}. It contains information about 
 including either the prepped recipe or the formula terms object.
 \item \code{pull_workflow_prepped_recipe()} returns the prepped recipe. It is
 extracted from the mold object returned from \code{pull_workflow_mold()}.
-\item \code{pull_workflow_testing()} returns the raw testing data (without applying
-the preprocessing steps recipe or formula). Since the split
-training/testing is done when the user \verb{fit()'s the model, the testing data can only be extracted after a model fit. The prepping of the testing data is done when specifying }new_data\verb{in}predict.workflow`
-automatically.
 }
 }
 \examples{
 library(parsnip)
 library(recipes)
+library(magrittr)
 
-model <- linear_reg()
-model <- set_engine(model, "lm")
+model <- linear_reg() \%>\%
+  set_engine("lm")
 
-recipe <- ~ recipe(mpg ~ cyl + disp, .x) \%>\% step_log(disp)
+recipe <- recipe(mpg ~ cyl + disp, mtcars) \%>\%
+  step_log(disp)
 
-base_workflow <- workflow()
-base_workflow <- add_data(base_workflow, mtcars)
-base_workflow <- add_model(base_workflow, model)
+base_wf <- workflow() \%>\%
+  add_model(model)
 
-recipe_workflow <- add_recipe(base_workflow, recipe)
-formula_workflow <- add_formula(base_workflow, mpg ~ cyl + log(disp))
+recipe_wf <- add_recipe(base_wf, recipe)
+formula_wf <- add_formula(base_wf, mpg ~ cyl + log(disp))
 
-fit_recipe_workflow <- fit(recipe_workflow)
-fit_formula_workflow <- fit(formula_workflow)
+fit_recipe_wf <- fit(recipe_wf, mtcars)
+fit_formula_wf <- fit(formula_wf, mtcars)
 
-pull_workflow_rawdata(fit_recipe_workflow)
-pull_workflow_rawdata(fit_formula_workflow)
-
-# The preprocessor is either the recipe function or a formula
-pull_workflow_preprocessor(recipe_workflow)
-pull_workflow_preprocessor(formula_workflow)
+# The preprocessor is either a recipe or a formula
+pull_workflow_preprocessor(recipe_wf)
+pull_workflow_preprocessor(formula_wf)
 
 # The `spec` is the parsnip spec before it has been fit.
 # The `fit` is the fit parsnip model.
-pull_workflow_spec(fit_formula_workflow)
-pull_workflow_fit(fit_formula_workflow)
+pull_workflow_spec(fit_formula_wf)
+pull_workflow_fit(fit_formula_wf)
 
 # The mold is returned from `hardhat::mold()`, and contains the
 # predictors, outcomes, and information about the preprocessing
 # for use on new data at `predict()` time.
-pull_workflow_mold(fit_recipe_workflow)
+pull_workflow_mold(fit_recipe_wf)
 
 # A useful shortcut is to extract the prepped recipe from the workflow
-pull_workflow_prepped_recipe(fit_recipe_workflow)
+pull_workflow_prepped_recipe(fit_recipe_wf)
 
 # That is identical to
 identical(
-  pull_workflow_mold(fit_recipe_workflow)$blueprint$recipe,
-  pull_workflow_prepped_recipe(fit_recipe_workflow)
+  pull_workflow_mold(fit_recipe_wf)$blueprint$recipe,
+  pull_workflow_prepped_recipe(fit_recipe_wf)
 )
-
 }

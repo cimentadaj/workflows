@@ -1,38 +1,50 @@
 #' Create a workflow
 #'
 #' A `workflow` is a container object that aggregates information required to
-#' fit and predict from a model. This information might be the main dataset,
-#' specified through [add_data()], a recipe used in
+#' fit and predict from a model. This information might be a recipe used in
 #' preprocessing, specified through [add_recipe()], or the model specification
 #' to fit, specified through [add_model()].
 #'
-#' @param data A data frame or tibble used to begin the workflow. This is
-#' optional as the data can be specified with [add_data()]. 
-#' 
 #' @return
 #' A new `workflow` object.
 #'
+#' @includeRmd man/rmd/indicators.Rmd details
+#'
 #' @examples
+#' library(parsnip)
 #' library(recipes)
+#' library(magrittr)
+#' library(modeldata)
 #'
-#' rec <- ~ recipe(mpg ~ cyl, .x) %>% step_log(cyl)
-#' wrk <- workflow(mtcars)
-#' wrk <- add_recipe(wrk, rec)
+#' data("attrition")
 #'
+#' model <- logistic_reg() %>%
+#'   set_engine("glm")
+#'
+#' base_wf <- workflow() %>%
+#'   add_model(model)
+#'
+#' formula_wf <- base_wf %>%
+#'   add_formula(Attrition ~ BusinessTravel + YearsSinceLastPromotion + OverTime)
+#'
+#' fit(formula_wf, attrition)
+#'
+#' recipe <- recipe(Attrition ~ ., attrition) %>%
+#'   step_dummy(all_nominal(), -Attrition) %>%
+#'   step_corr(all_predictors(), threshold = 0.8)
+#'
+#' recipe_wf <- base_wf %>%
+#'   add_recipe(recipe)
+#'
+#' fit(recipe_wf, attrition)
 #' @export
-workflow <- function(data = NULL) {
-  if (!is.null(data) && !is.data.frame(data)) {
-    abort("A workflow can only begin with a data frame; `data` must a data frame") #nolintr
-  }
-
-  new_workflow(data = data,
-               pre = new_stage_pre(mold = data))
+workflow <- function() {
+  new_workflow()
 }
 
 # ------------------------------------------------------------------------------
 
-new_workflow <- function(data = NULL,
-                         pre = new_stage_pre(),
+new_workflow <- function(pre = new_stage_pre(),
                          fit = new_stage_fit(),
                          post = new_stage_post(),
                          trained = FALSE) {
@@ -53,7 +65,6 @@ new_workflow <- function(data = NULL,
   }
 
   data <- list(
-    data = data,
     pre = pre,
     fit = fit,
     post = post,
@@ -91,25 +102,6 @@ print_header <- function(x) {
 
   cat_line(header)
 
-  data_msg <- cli::style_italic("Data:")
-
-  if (!has_raw_data(x)) {
-    data_msg <- glue::glue("{data_msg} None")
-  } else {
-    dt <- pull_workflow_rawdata(x)
-    data_missing <- sum(is.na(dt)) / nrow(dt)
-    # I include a `is.nan` in case the data frame
-    # is empty and 0 / 0 equals NaN
-    data_content <- glue::glue(
-      "{nrow(dt)} rows x {ncol(dt)} columns; ",
-      "{if (is.nan(data_missing)) 0 else data_missing}% missing values"
-    )
-
-    data_msg <- glue::glue("{data_msg} {data_content}")
-  }
-
-  cat_line(data_msg)
-
   preprocessor_msg <- cli::style_italic("Preprocessor:")
 
   if (has_preprocessor_formula(x)) {
@@ -141,94 +133,33 @@ print_header <- function(x) {
 print_preprocessor <- function(x) {
   has_preprocessor_formula <- has_preprocessor_formula(x)
   has_preprocessor_recipe <- has_preprocessor_recipe(x)
-  has_preprocessor_split <- has_preprocessor_split(x)
-  has_preprocessor_resample <- has_preprocessor_resample(x)
 
-  preprocessing <- c(
-    has_preprocessor_formula,
-    has_preprocessor_recipe,
-    has_preprocessor_split,
-    has_preprocessor_resample
-  )
-
-  # If all have **no** preprocessing, don't print anything
-  if (all(!preprocessing)) {
+  if (!has_preprocessor_formula && !has_preprocessor_recipe) {
     return(invisible(x))
   }
 
-  # Space between Workflow section and Data section
+  # Space between Workflow section and Preprocessor section
   cat_line("")
 
   header <- cli::rule("Preprocessor")
   cat_line(header)
 
-  if (has_preprocessor_split) {
-    print_preprocessor_split(x)
-  }
-
-  if (has_preprocessor_resample) {
-    print_preprocessor_resample(x)
-  }
-
   if (has_preprocessor_formula) {
     print_preprocessor_formula(x)
   }
 
-  ## if (has_preprocessor_recipe) {
-  ##   print_preprocessor_recipe(x)
-  ## }
+  if (has_preprocessor_recipe) {
+    print_preprocessor_recipe(x)
+  }
 
   invisible(x)
 }
 
-print_preprocessor_split <- function(x) {
-  split_msg <- cli::style_italic("Split:")
-
-  if (!has_preprocessor_split(x)) {
-    split_msg <- glue::glue("{split_msg} None")
-  } else {
-    split_fn_name <- names(x$pre$actions$split)[1]
-    arg <- unlist(x$pre$actions$split$args)
-
-    if (rlang::is_empty(arg)) {
-      arg_msg <- "default args"
-    } else {
-      arg_msg <- paste0(names(arg), " = ", arg, collapse = ", ")
-    }
-
-    split_msg <- glue::glue("{split_msg} {split_fn_name} w/ {arg_msg}")
-  }
-
-  cat_line(split_msg)
-}
-
-print_preprocessor_resample <- function(x) {
-  resample_msg <- cli::style_italic("Resample:")
-
-  if (!has_preprocessor_resample(x)) {
-    resample_msg <- glue::glue("{resample_msg} None")
-  } else {
-    resample_fn_name <- names(x$pre$actions$resample)[1]
-    arg <- unlist(x$pre$actions$resample$args)
-
-    if (rlang::is_empty(arg)) {
-      arg_msg <- "default args"
-    } else {
-      arg_msg <- paste0(names(arg), " = ", arg, collapse = ", ")
-    }
-
-    resample_msg <- glue::glue("{resample_msg} {resample_fn_name} w/ {arg_msg}")
-  }
-
-  cat_line(resample_msg)
-}
-
 print_preprocessor_formula <- function(x) {
-  formula_msg <- cli::style_italic("Formula: ")
   formula <- pull_workflow_preprocessor(x)
   formula <- rlang::expr_text(formula)
 
-  cat_line(glue::glue(formula_msg, formula))
+  cat_line(formula)
 
   invisible(x)
 }
@@ -236,6 +167,7 @@ print_preprocessor_formula <- function(x) {
 print_preprocessor_recipe <- function(x) {
   recipe <- pull_workflow_preprocessor(x)
   steps <- recipe$steps
+
   n_steps <- length(steps)
 
   if (n_steps == 1L) {

@@ -38,13 +38,6 @@ validate_is_workflow <- function(x, arg = "`x`") {
 }
 
 # ------------------------------------------------------------------------------
-has_preprocessor_split <- function(x) {
-  "split" %in% names(x$pre$actions)
-}
-
-has_preprocessor_resample <- function(x) {
-  "resample" %in% names(x$pre$actions)
-}
 
 has_preprocessor_recipe <- function(x) {
   "recipe" %in% names(x$pre$actions)
@@ -53,11 +46,6 @@ has_preprocessor_recipe <- function(x) {
 has_preprocessor_formula <- function(x) {
   "formula" %in% names(x$pre$actions)
 }
-
-has_preprocessor_fit <- function(x) {
-  !is.null(x$fit$fit)
-}
-
 
 has_mold <- function(x) {
   !is.null(x$pre$mold)
@@ -71,46 +59,12 @@ has_fit <- function(x) {
   !is.null(x$fit$fit)
 }
 
-has_raw_data <- function(x) {
-  !is.null(x$data)
-}
-
-
-# ------------------------------------------------------------------------------
-
-# Since all actions within pre/fit/post are named, we want to be able to remove
-# some actions from a stage. For example, if in the pre stage there is a recipe and
-# the split specification, we want the power to remove specific actions
-# from that stage. Each purge_action_* works for a stage and name to remove the
-# action.
-purge_action <- function(x, name) {
-  all_names <- names(x)
-  selected_names <- setdiff(all_names, name)
-  x <- x[selected_names]
-  # In the case where the list of actions is empty
-  # it will still be named. Make sure its completely empty
-  # This is useful for comparing with an empty list of actions in the tests
-  if (rlang::is_empty(x)) x <- unname(x)
-  x
-}
-
-purge_action_split <- function(x) {
-  purge_action(x$pre$actions, "split")
-}
-
-purge_action_resample <- function(x) {
-  purge_action(x$pre$actions, "resample")
-}
-
-purge_action_formula <- function(x) {
-  purge_action(x$pre$actions, "formula")
-}
-
-
-purge_action_recipe <- function(x) {
-  purge_action(x$pre$actions, "recipe")
-}
-
-combine_outcome_preds <- function(mold) {
-  cbind(mold$outcomes, mold$predictors)
+has_blueprint <- function(x) {
+  if (has_preprocessor_formula(x)) {
+    !is.null(x$pre$actions$formula$blueprint)
+  } else if (has_preprocessor_recipe(x)) {
+    !is.null(x$pre$actions$recipe$blueprint)
+  } else {
+    abort("Internal error: `x` must have a preprocessor to check for a blueprint.")
+  }
 }

@@ -6,6 +6,8 @@
 \alias{workflows-package}
 \title{workflows: Modeling Workflows}
 \description{
+\if{html}{\figure{logo.png}{options: align='right' alt='logo' width='120'}}
+
 Managing both a 'parsnip' model and a preprocessor, such as a
     model formula or recipe from 'recipes', can often be challenging. The goal
     of 'workflows' is to streamline this process by bundling the model alongside
@@ -15,6 +17,7 @@ Managing both a 'parsnip' model and a preprocessor, such as a
 Useful links:
 \itemize{
   \item \url{https://github.com/tidymodels/workflows}
+  \item \url{https://workflows.tidymodels.org}
   \item Report bugs at \url{https://github.com/tidymodels/workflows/issues}
 }
 

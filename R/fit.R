@@ -12,7 +12,12 @@
 #' In the future, there will also be _postprocessing_ steps that can be added
 #' after the model has been fit.
 #'
+#' @includeRmd man/rmd/indicators.Rmd details
+#'
 #' @param object A workflow
+#'
+#' @param data A data frame of predictors and outcomes to use when fitting the
+#'   workflow
 #'
 #' @param ... Not used
 #'
@@ -27,37 +32,37 @@
 #' @examples
 #' library(parsnip)
 #' library(recipes)
+#' library(magrittr)
 #'
-#' model <- linear_reg()
-#' model <- set_engine(model, "lm")
+#' model <- linear_reg() %>%
+#'   set_engine("lm")
 #'
-#' formula_workflow <-
-#'  mtcars %>%
-#'  workflow() %>%
-#'  add_formula(mpg ~ cyl + log(disp)) %>%
-#'  add_model(model)
-#' 
-#' fit(formula_workflow)
+#' base_wf <- workflow() %>%
+#'   add_model(model)
 #'
-#' recipe_workflow <-
-#'  formula_workflow %>%
-#'  remove_formula() %>% 
-#'  add_recipe(~ recipe(mpg ~ cyl + disp, .x) %>% step_log(disp))
+#' formula_wf <- base_wf %>%
+#'   add_formula(mpg ~ cyl + log(disp))
 #'
-#' fit(recipe_workflow)
+#' fit(formula_wf, mtcars)
 #'
-
-fit.workflow <- function(object, ..., control = control_workflow()) {
+#' recipe <- recipe(mpg ~ cyl + disp, mtcars) %>%
+#'   step_log(disp)
+#'
+#' recipe_wf <- base_wf %>%
+#'   add_recipe(recipe)
+#'
+#' fit(recipe_wf, mtcars)
+fit.workflow <- function(object, data, ..., control = control_workflow()) {
   workflow <- object
 
-  if (!has_raw_data(workflow)) {
-    abort("`data` must be specified to fit a workflow; Do you need `add_data`?")
+  if (is_missing(data)) {
+    abort("`data` must be provided to fit a workflow.")
   }
 
   ellipsis::check_dots_empty()
-  validate_has_minimal_components(workflow)
+  validate_has_minimal_components(object)
 
-  workflow <- .fit_pre(workflow)
+  workflow <- .fit_pre(workflow, data)
   workflow <- .fit_model(workflow, control)
 
   # Eh? Predictions during the fit?
@@ -96,29 +101,33 @@ fit.workflow <- function(object, ..., control = control_workflow()) {
 #' @examples
 #' library(parsnip)
 #' library(recipes)
+#' library(magrittr)
 #'
-#' model <- linear_reg()
-#' model <- set_engine(model, "lm")
+#' model <- linear_reg() %>%
+#'   set_engine("lm")
 #'
-#' base_workflow <- workflow(mtcars)
-#' base_workflow <- add_model(base_workflow, model)
+#' unfit_wf <- workflow() %>%
+#'   add_model(model) %>%
+#'   add_formula(mpg ~ cyl + log(disp))
 #'
-#' formula_workflow <- add_formula(base_workflow, mpg ~ cyl + log(disp))
-#'
-#' partially_fit_workflow <- .fit_pre(formula_workflow)
-#' fit_workflow <- .fit_model(partially_fit_workflow, control_workflow())
-.fit_pre <- function(wflow) {
-  n <- length(wflow[["pre"]]$actions)
+#' partially_fit_wf <- .fit_pre(unfit_wf, mtcars)
+#' fit_workflow <- .fit_model(partially_fit_wf, control_workflow())
+.fit_pre <- function(workflow, data) {
+  workflow <- finalize_blueprint(workflow)
 
-  for (i in seq_len(n)) {
-    action <- wflow[["pre"]]$actions[[i]]
+  n <- length(workflow[["pre"]]$actions)
 
-    # Update the `wflow` as we iterate through pre steps
-    wflow <- fit(action, wflow)
+  for(i in seq_len(n)) {
+    action <- workflow[["pre"]]$actions[[i]]
+
+    # Update both the `workflow` and the `data` as we iterate through pre steps
+    result <- fit(action, workflow = workflow, data = data)
+    workflow <- result$workflow
+    data <- result$data
   }
 
-  # But only return the wflow, it contains the final set of data in `mold`
-  wflow
+  # But only return the workflow, it contains the final set of data in `mold`
+  workflow
 }
 
 #' @rdname workflows-internals
@@ -150,4 +159,74 @@ validate_has_minimal_components <- function(x) {
   }
 
   invisible(x)
+}
+
+
+# ------------------------------------------------------------------------------
+
+finalize_blueprint <- function(workflow) {
+  # Use user supplied blueprint if provided
+  if (has_blueprint(workflow)) {
+    return(workflow)
+  }
+
+  if (has_preprocessor_recipe(workflow)) {
+    finalize_blueprint_recipe(workflow)
+  } else if (has_preprocessor_formula(workflow)) {
+    finalize_blueprint_formula(workflow)
+  } else {
+    abort("Internal error: `workflow` should have a preprocessor at this point.")
+  }
+}
+
+finalize_blueprint_recipe <- function(workflow) {
+  # Use the default blueprint, no parsnip model encoding info is used here
+  blueprint <- hardhat::default_recipe_blueprint()
+
+  recipe <- pull_workflow_preprocessor(workflow)
+
+  update_recipe(workflow, recipe = recipe, blueprint = blueprint)
+}
+
+finalize_blueprint_formula <- function(workflow) {
+  tbl_encodings <- pull_workflow_spec_encoding_tbl(workflow)
+
+  indicators <- tbl_encodings$predictor_indicators
+  intercept <- tbl_encodings$compute_intercept
+
+  if (!is_string(indicators)) {
+    abort("Internal error: `indicators` encoding from parsnip should be a string.")
+  }
+  if (!is_bool(intercept)) {
+    abort("Internal error: `intercept` encoding from parsnip should be a bool.")
+  }
+
+  # Use model specific information to construct the blueprint
+  blueprint <- hardhat::default_formula_blueprint(
+    indicators = indicators,
+    intercept = intercept
+  )
+
+  formula <- pull_workflow_preprocessor(workflow)
+
+  update_formula(workflow, formula = formula, blueprint = blueprint)
+}
+
+pull_workflow_spec_encoding_tbl <- function(workflow) {
+  spec <- pull_workflow_spec(workflow)
+  spec_cls <- class(spec)[[1]]
+
+  tbl_encodings <- parsnip::get_encoding(spec_cls)
+
+  indicator_engine <- tbl_encodings$engine == spec$engine
+  indicator_mode <- tbl_encodings$mode == spec$mode
+  indicator_spec <- indicator_engine & indicator_mode
+
+  out <- tbl_encodings[indicator_spec, , drop = FALSE]
+
+  if (nrow(out) != 1L) {
+    abort("Internal error: Exactly 1 model/engine/mode combination must be located.")
+  }
+
+  out
 }

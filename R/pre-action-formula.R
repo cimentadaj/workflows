@@ -17,6 +17,8 @@
 #' To fit a workflow, one of `add_formula()` or `add_recipe()` _must_ be
 #' specified, but not both.
 #'
+#' @includeRmd man/rmd/add-formula.Rmd details
+#'
 #' @param x A workflow
 #'
 #' @param formula A formula specifying the terms of the model. It is advised to
@@ -26,7 +28,16 @@
 #' @param ... Not used.
 #'
 #' @param blueprint A hardhat blueprint used for fine tuning the preprocessing.
-#'   If `NULL`, [hardhat::default_formula_blueprint()] is used.
+#'
+#'   If `NULL`, [hardhat::default_formula_blueprint()] is used and is passed
+#'   arguments that best align with the model present in the workflow.
+#'
+#'   Note that preprocessing done here is separate from preprocessing that
+#'   might be done by the underlying model. For example, if a blueprint with
+#'   `indicators = "none"` is specified, no dummy variables will be created by
+#'   hardhat, but if the underlying model requires a formula interface that
+#'   internally uses [stats::model.matrix()], factors will still be expanded to
+#'   dummy variables by the model.
 #'
 #' @return
 #' `x`, updated with either a new or removed formula preprocessor.
@@ -106,9 +117,8 @@ new_action_formula <- function(formula, blueprint) {
     abort("`formula` must be a formula.")
   }
 
-  if (is.null(blueprint)) {
-    blueprint <- hardhat::default_formula_blueprint()
-  } else if (!is_formula_blueprint(blueprint)) {
+  # `NULL` blueprints are finalized at fit time
+  if (!is_null(blueprint) && !is_formula_blueprint(blueprint)) {
     abort("`blueprint` must be a hardhat 'formula_blueprint'.")
   }
 

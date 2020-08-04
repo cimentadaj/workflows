@@ -13,6 +13,8 @@
 #' @details
 #' `add_model()` is a required step to construct a minimal workflow.
 #'
+#' @includeRmd man/rmd/indicators.Rmd details
+#'
 #' @param x A workflow.
 #'
 #' @param spec A parsnip model specification.

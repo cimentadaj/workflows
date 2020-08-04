@@ -1,3 +1,18 @@
 > fit(workflow, mtcars)
-Error: `data` must be specified to fit a workflow; Do you need `add_data`?
+== Workflow [trained] ==========================================================
+Preprocessor: Formula
+Model: linear_reg()
+
+-- Preprocessor ----------------------------------------------------------------
+mpg ~ cyl
+
+-- Model -----------------------------------------------------------------------
+
+Call:
+stats::lm(formula = ..y ~ ., data = data)
+
+Coefficients:
+(Intercept)          cyl  
+     37.885       -2.876  
+
 

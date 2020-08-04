@@ -6,7 +6,7 @@
 \alias{.fit_model}
 \title{Internal workflow functions}
 \usage{
-.fit_pre(wflow)
+.fit_pre(workflow, data)
 
 .fit_model(workflow, control)
 }
@@ -18,10 +18,10 @@ For \code{.fit_pre()}, this should be a fresh workflow.
 For \code{.fit_model()}, this should be a workflow that has already been trained
 through \code{.fit_pre()}.}
 
-\item{control}{A \code{\link[=control_workflow]{control_workflow()}} object}
-
 \item{data}{A data frame of predictors and outcomes to use when fitting the
 workflow}
+
+\item{control}{A \code{\link[=control_workflow]{control_workflow()}} object}
 }
 \description{
 \code{.fit_pre()} and \code{.fit_model()} are internal workflow functions for
@@ -32,16 +32,16 @@ general user should never need to worry about them.
 \examples{
 library(parsnip)
 library(recipes)
+library(magrittr)
 
-model <- linear_reg()
-model <- set_engine(model, "lm")
+model <- linear_reg() \%>\%
+  set_engine("lm")
 
-base_workflow <- workflow(mtcars)
-base_workflow <- add_model(base_workflow, model)
+unfit_wf <- workflow() \%>\%
+  add_model(model) \%>\%
+  add_formula(mpg ~ cyl + log(disp))
 
-formula_workflow <- add_formula(base_workflow, mpg ~ cyl + log(disp))
-
-partially_fit_workflow <- .fit_pre(formula_workflow)
-fit_workflow <- .fit_model(partially_fit_workflow, control_workflow())
+partially_fit_wf <- .fit_pre(unfit_wf, mtcars)
+fit_workflow <- .fit_model(partially_fit_wf, control_workflow())
 }
 \keyword{internal}
